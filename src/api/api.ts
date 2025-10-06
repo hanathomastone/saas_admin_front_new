@@ -1,11 +1,14 @@
-// src/api/api.ts
 import axios from "axios";
 
+// ✅ axios 인스턴스 생성
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080",
+  baseURL: "http://localhost:8080", // 또는 "http://localhost:8080"
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// 요청마다 토큰 자동 추가
+// ✅ 요청 시 토큰 자동 첨부 (선택)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   if (token) {

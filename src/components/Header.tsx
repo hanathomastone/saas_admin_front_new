@@ -1,29 +1,54 @@
 // src/components/Header.tsx
-import { Box, Flex, Image } from "@chakra-ui/react";
+import { Flex, Text, Button, Spacer } from "@chakra-ui/react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-interface HeaderProps {
-  companyLogo: string;
-}
+export default function Header() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [pageTitle, setPageTitle] = useState("");
 
-export default function Header({ companyLogo }: HeaderProps) {
+  useEffect(() => {
+    switch (location.pathname) {
+      case "/dashboard":
+        setPageTitle("대시보드");
+        break;
+      case "/admin/users":
+        setPageTitle("사용자 관리");
+        break;
+      case "/settings":
+        setPageTitle("설정");
+        break;
+      default:
+        setPageTitle("");
+    }
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
   return (
-    <Box bg="white" borderBottom="1px" borderColor="gray.200" p={4}>
-      <Flex align="center">
-        {/* 회사 로고 */}
-        <Image
-          src={companyLogo}
-          alt="Company Logo"
-          height="30px" // 세로 줄임
-          width="auto" // 비율 유지
-          mr={6}
-        />
-
-        <Flex ml="auto" align="center">
-          <Box as="button" color="red.500" fontWeight="medium">
-            로그아웃
-          </Box>
-        </Flex>
-      </Flex>
-    </Box>
+    <Flex
+      h="60px"
+      bg="white"
+      align="center"
+      px={6}
+      borderBottom="1px solid"
+      borderColor="gray.200"
+      shadow="sm"
+      position="sticky"
+      top={0}
+      zIndex={10}
+    >
+      <Text fontSize="lg" fontWeight="bold">
+        {pageTitle}
+      </Text>
+      <Spacer />
+      <Button size="sm" colorScheme="red" onClick={handleLogout}>
+        로그아웃
+      </Button>
+    </Flex>
   );
 }

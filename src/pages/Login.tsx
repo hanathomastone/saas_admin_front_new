@@ -13,75 +13,120 @@ import {
   TabList,
   Tabs,
   Text,
+  useToast,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import api from "../api/api"; // ✅ axios 클라이언트
-import { AxiosError } from "axios";
-export default function Login() {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+import api from "../api"; // ✅ default export인 axios 인스턴스
+import type { AxiosError } from "axios";
 
+interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  isFirstLogin: string;
+  adminId?: number;
+  adminName?: string;
+  adminIsSuper?: string;
+  userId?: number;
+  userName?: string;
+}
+
+interface ApiResponse {
+  rt?: number;
+  rtMsg?: string;
+  response?: LoginResponse;
+}
+
+export default function Login() {
+  const [language, setLanguage] = useState("ko");
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [id, setId] = useState("");
+  const [selectedTab, setSelectedTab] = useState<"user" | "admin">("user");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const navigate = useNavigate();
 
   const handleFocus = (field: string) => setFocusedField(field);
   const handleBlur = () => setFocusedField(null);
 
   const handleLogin = async () => {
     try {
-      const res = await api.post("/login", {
-        loginId: id,
-        password: password,
-        userType: "USER",
+      const body = { userType: selectedTab, loginId, password };
+      const res = await api.post<ApiResponse>("/login", body, {
+        headers: { "Content-Type": "application/json" },
       });
 
-      // ✅ 로그인 성공 시에만 실행
-      localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("refreshToken", res.data.refreshToken);
-      localStorage.setItem("userName", res.data.userName);
-      localStorage.setItem("userId", res.data.userId);
+      console.log("✅ 로그인 응답:", res.data);
 
-      navigate("/dashboard");
-    } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
-      console.error("로그인 실패:", error);
+      const data: LoginResponse =
+        res.data.response ?? (res.data as LoginResponse);
 
-      if (error.response?.status === 401) {
-        setError("아이디 혹은 비밀번호가 올바르지 않습니다.");
-      } else {
-        setError("로그인 중 오류가 발생했습니다.");
+      if (!data.accessToken) {
+        throw new Error("accessToken이 없습니다.");
       }
-    }
-  };
 
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const lang = e.target.value;
-    i18n.changeLanguage(lang);
-    localStorage.setItem("lang", lang); // 새로고침해도 유지
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("userType", selectedTab);
+
+      if (selectedTab === "admin") {
+        localStorage.setItem("adminName", data.adminName || "");
+        localStorage.setItem("adminId", data.adminId?.toString() || "");
+      } else {
+        localStorage.setItem("userName", data.userName || "");
+        localStorage.setItem("userId", data.userId?.toString() || "");
+      }
+
+      toast({
+        title: "로그인 성공",
+        description:
+          selectedTab === "admin"
+            ? `${data.adminName || "관리자"}님 환영합니다!`
+            : `${data.userName || "회원"}님 환영합니다!`,
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+
+      navigate("/admin/users");
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>;
+      console.error("❌ 로그인 에러:", axiosError);
+
+      const message =
+        axiosError.response?.data?.rtMsg ??
+        axiosError.response?.data?.response ??
+        axiosError.message ??
+        "아이디 또는 비밀번호를 확인하세요.";
+
+      setError(typeof message === "string" ? message : "로그인 실패");
+
+      toast({
+        title: "로그인 실패",
+        description: typeof message === "string" ? message : "로그인 실패",
+        status: "error",
+        duration: 2500,
+        isClosable: true,
+      });
+    }
   };
 
   return (
     <Flex minH="100vh" align="center" justify="center" bg="white" px={6}>
       <Box w="100%" maxW="400px">
-        {/* Header */}
         <Flex justify="space-between" align="center" mb={6}>
-          {/* 뒤로가기 버튼 */}
           <Button
             variant="ghost"
             p={0}
             minW="auto"
-            onClick={() => console.log("뒤로가기")}
+            onClick={() => navigate(-1)}
           >
             <Image src="/images/back.png" alt="뒤로가기" w="14px" h="14px" />
           </Button>
 
-          {/* 언어 선택 */}
           <Select
-            value={i18n.language}
-            onChange={handleLanguageChange}
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
             w="120px"
             borderRadius="md"
             border="1px solid"
@@ -92,11 +137,10 @@ export default function Login() {
           >
             <option value="ko">한국어</option>
             <option value="en">English</option>
-            <option value="vi">Tiếng Việt</option>
+            <option value="vi">베트남어</option>
           </Select>
         </Flex>
 
-        {/* Dentix 로고 */}
         <Image
           src="/images/denti_x.png"
           alt="Dentix Logo"
@@ -105,8 +149,12 @@ export default function Login() {
           h="40px"
         />
 
-        {/* Tabs */}
-        <Tabs variant="unstyled" align="center" mb={6}>
+        <Tabs
+          variant="unstyled"
+          align="center"
+          mb={6}
+          onChange={(index) => setSelectedTab(index === 0 ? "user" : "admin")}
+        >
           <TabList borderBottom="1px solid" borderColor="gray.200">
             <Tab
               _selected={{
@@ -116,7 +164,7 @@ export default function Login() {
               }}
               flex="1"
             >
-              {t("personal_member")}
+              개인 회원
             </Tab>
             <Tab
               _selected={{
@@ -125,21 +173,19 @@ export default function Login() {
                 borderColor: "blue.600",
               }}
               flex="1"
-              color="gray.400"
             >
-              {t("admin_member")}
+              관리자 회원
             </Tab>
           </TabList>
         </Tabs>
 
-        {/* Input Fields */}
         <Box mb={4}>
           <FormControl>
-            <FormLabel>{t("id")}</FormLabel>
+            <FormLabel>아이디</FormLabel>
             <Input
               type="text"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               onFocus={() => handleFocus("id")}
               onBlur={handleBlur}
               borderColor={focusedField === "id" ? "red.400" : "gray.300"}
@@ -153,7 +199,7 @@ export default function Login() {
 
         <Box mb={6}>
           <FormControl>
-            <FormLabel>{t("password")}</FormLabel>
+            <FormLabel>비밀번호</FormLabel>
             <Input
               type="password"
               value={password}
@@ -169,7 +215,6 @@ export default function Login() {
           </FormControl>
         </Box>
 
-        {/* Login Button */}
         <Button
           colorScheme="blue"
           w="100%"
@@ -177,7 +222,7 @@ export default function Login() {
           mb={4}
           onClick={handleLogin}
         >
-          {t("login")}
+          로그인
         </Button>
 
         {error && (
@@ -186,23 +231,22 @@ export default function Login() {
           </Text>
         )}
 
-        {/* Footer Links */}
         <Flex justify="center" gap={4} mt={4} fontSize="sm" color="gray.500">
           <RouterLink to="/register/verify">
             <Text as="span" color="blue.500" cursor="pointer">
-              {t("register")}
+              회원가입
             </Text>
           </RouterLink>
           <Text>|</Text>
           <RouterLink to="/find-password">
             <Text as="span" color="blue.500" cursor="pointer">
-              {t("find_password")}
+              비밀번호 찾기
             </Text>
           </RouterLink>
           <Text>|</Text>
           <RouterLink to="/contact" state={{ from: "login" }}>
             <Text as="span" color="blue.500" cursor="pointer">
-              {t("contact")}
+              문의하기
             </Text>
           </RouterLink>
         </Flex>

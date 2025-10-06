@@ -1,30 +1,26 @@
 // src/components/MainLayout.tsx
-import { Flex, Box } from "@chakra-ui/react";
+import { Box, Flex, useBreakpointValue } from "@chakra-ui/react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import type { ReactNode } from "react";
 
 interface MainLayoutProps {
   children: ReactNode;
-  organizationName: string;
-  companyLogo: string;
 }
 
-export default function MainLayout({
-  children,
-  organizationName,
-  companyLogo,
-}: MainLayoutProps) {
-  return (
-    <Flex minH="100vh" bg="gray.50">
-      <Sidebar organizationName={organizationName} />
+export default function MainLayout({ children }: MainLayoutProps) {
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const sidebarWidth = isMobile ? "70px" : "260px";
 
-      <Flex direction="column" flex="1">
-        <Header companyLogo={companyLogo} />
-        <Box p={6} flex="1">
+  return (
+    <Flex>
+      <Sidebar />
+      <Box ml={sidebarWidth} flex="1" transition="0.3s ease">
+        <Header />
+        <Box p={6} bg="gray.50" minH="calc(100vh - 60px)">
           {children}
         </Box>
-      </Flex>
+      </Box>
     </Flex>
   );
 }
