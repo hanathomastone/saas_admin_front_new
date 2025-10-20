@@ -16,8 +16,11 @@ export default function Header() {
       case "/admin/users":
         setPageTitle("사용자 관리");
         break;
-      case "/settings":
-        setPageTitle("설정");
+      case "/admin/subscription/usage":
+        setPageTitle("구독정보");
+        break;
+      case "/admin/users/statistic":
+        setPageTitle("사용자 통계");
         break;
       default:
         setPageTitle("");
@@ -26,7 +29,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/");
+    navigate("/login");
   };
 
   return (

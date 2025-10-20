@@ -1,0 +1,65 @@
+{
+  "contents": {
+    "title": "Nội dung chăm sóc răng miệng",
+    "subtitle": "Khám phá nội dung chăm sóc răng miệng cá nhân hóa dựa trên AI.",
+    "error_load": "Không thể tải nội dung.",
+    "empty": "Không có nội dung trong danh mục này."
+  },
+  "login": {
+    "successTitle": "Đăng nhập thành công",
+    "successMsg": "Chào mừng, {{name}}!",
+    "errorTitle": "Đăng nhập thất bại",
+    "errorMsg": "Vui lòng kiểm tra lại tên đăng nhập hoặc mật khẩu.",
+    "userTab": "Người dùng",
+    "adminTab": "Quản trị viên",
+    "idLabel": "Tên đăng nhập",
+    "idPlaceholder": "Nhập tên đăng nhập của bạn",
+    "passwordLabel": "Mật khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu của bạn",
+    "loginButton": "Đăng nhập",
+    "registerButton": "Đăng ký",
+    "findPasswordButton": "Quên mật khẩu?"
+  },
+  "common": {
+    "language": "Ngôn ngữ",
+    "korean": "Tiếng Hàn",
+    "english": "Tiếng Anh",
+    "vietnamese": "Tiếng Việt"
+  },
+  "service": {
+    "plaque": "Dịch vụ phát hiện mảng bám",
+    "gingivitis": "Dịch vụ phát hiện viêm nướu",
+    "oral_ai": "Dịch vụ phân tích AI răng miệng"
+  },
+  "oralCheck": {
+    "title": "Dịch vụ kiểm tra răng miệng",
+    "plaqueDetection": "Phát hiện mảng bám",
+    "realTime": "Chụp trực tiếp",
+    "realTimeDesc": "Sử dụng máy ảnh để chụp tình trạng răng miệng trực tiếp.",
+    "upload": "Tải lên hình ảnh",
+    "uploadDesc": "Tải ảnh răng miệng để phân tích.",
+    "guideTitle": "Hướng dẫn chụp ảnh",
+    "guideAlt": "Hình hướng dẫn chụp răng miệng",
+    "guideConfirm": "Bắt đầu chụp",
+    "guide1": "Chụp trong môi trường sáng.",
+    "guide2": "Mở miệng rộng để thấy toàn bộ răng.",
+    "guide3": "Giữ thiết bị ổn định để tránh rung mờ."
+  },
+  "oralUpload": {
+    "title": "Tải lên hình ảnh răng miệng",
+    "select": "Chọn hình ảnh",
+    "dragdrop": "Kéo hoặc nhấp để tải ảnh lên.",
+    "submit": "Phân tích",
+    "error_title": "Tải lên thất bại",
+    "error_desc": "Đã xảy ra lỗi khi tải ảnh lên.",
+    "no_file_title": "Chưa chọn tệp",
+    "no_file_desc": "Vui lòng chọn hình ảnh để tải lên.",
+    "result_title": "Kết quả phân tích",
+    "result_success": "Phân tích thành công",
+    "result_fail": "Phân tích thất bại",
+    "remaining": "💡 Số lần sử dụng còn lại",
+    "detail": "Xem chi tiết kết quả",
+    "close": "Đóng",
+    "retry": "Chụp lại"
+  }
+}

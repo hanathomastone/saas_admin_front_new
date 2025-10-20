@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 import {
   Box,
   VStack,
@@ -9,28 +8,31 @@ import {
   Divider,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  FiHome,
   FiUsers,
-  FiSettings,
   FiLogOut,
   FiUser,
   FiPieChart,
   FiBook,
+  FiBarChart2,
 } from "react-icons/fi";
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useBreakpointValue({ base: true, md: false });
   const organizationName = localStorage.getItem("organizationName") || "기관명";
 
   const menuItems = [
-    { label: "대시보드", icon: FiHome, path: "/dashboard" },
     { label: "사용자 관리", icon: FiUsers, path: "/admin/users" },
     { label: "사용자 통계", icon: FiPieChart, path: "/admin/users/statistic" },
     { label: "구독정보", icon: FiBook, path: "/admin/subscription/usage" },
-    { label: "설정", icon: FiSettings, path: "/settings" },
+    {
+      label: "사용량 정보",
+      icon: FiBarChart2,
+      path: "/admin/subscription/users",
+    },
   ];
 
   return (
@@ -47,14 +49,7 @@ export default function Sidebar() {
       transition="0.3s ease"
       overflowY="auto"
     >
-      {/* 로고 */}
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        mb={8}
-        textAlign="center"
-      >
+      <Flex direction="column" align="center" justify="center" mb={8}>
         <Image
           src="/images/DentiGlobal.png"
           alt="Company Logo"
@@ -63,8 +58,17 @@ export default function Sidebar() {
         />
       </Flex>
 
-      {/* 아바타 + 기관명 */}
-      <Flex align="center" mb={6} gap={3}>
+      {/* 아바타 + 기관명 (클릭 시 이동) */}
+      <Flex
+        align="center"
+        mb={6}
+        gap={3}
+        cursor="pointer"
+        _hover={{ bg: "gray.50" }}
+        p={2}
+        borderRadius="md"
+        onClick={() => navigate("/admin/organization/edit")}
+      >
         <Box
           bg="blue.100"
           borderRadius="full"
@@ -87,7 +91,6 @@ export default function Sidebar() {
 
       <Divider mb={5} />
 
-      {/* 메뉴 리스트 */}
       <VStack align="stretch" spacing={1}>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -113,7 +116,6 @@ export default function Sidebar() {
 
       <Divider my={5} />
 
-      {/* 로그아웃 */}
       <Flex
         align="center"
         p={3}

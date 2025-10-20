@@ -1,104 +1,115 @@
-import { useState } from "react";
 import {
   Box,
-  Button,
-  FormControl,
-  FormLabel,
   Heading,
+  Text,
   Input,
   Textarea,
-  useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  Button,
+  Grid,
+  GridItem,
+  VStack,
+  HStack,
+  Icon,
+  Select,
 } from "@chakra-ui/react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { MdEmail, MdPhone, MdLocationOn } from "react-icons/md";
 
-export default function Contact() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
-
-  const toast = useToast();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-
-  const from = location.state?.from || "login"; // 기본값은 로그인
-
-  const handleSubmit = () => {
-    if (!name || !email || !message) {
-      toast({ title: t("contact_warning"), status: "warning" });
-      return;
-    }
-    setIsCompleteOpen(true);
-  };
-
-  const handleConfirm = () => {
-    if (from === "user") {
-      navigate("/user");
-    } else {
-      navigate("/login");
-    }
-  };
-
+export default function ContactPage() {
   return (
-    <Box p={6} maxW="400px" mx="auto">
-      <Heading size="sm" mb={6}>
-        {t("contact")}
-      </Heading>
+    <Box maxW="1200px" mx="auto" p={8}>
+      <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={10}>
+        {/* 왼쪽 영역 */}
+        <GridItem>
+          <VStack align="start" spacing={6}>
+            <HStack>
+              <Icon as={MdEmail} boxSize={6} color="blue.500" />
+              <Box>
+                <Text fontWeight="bold">Email</Text>
+                <Text>example@thomastone.co.kr</Text>
+              </Box>
+            </HStack>
 
-      <FormControl mb={4}>
-        <FormLabel>{t("name")}</FormLabel>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t("enter_name") || ""}
-        />
-      </FormControl>
+            <HStack>
+              <Icon as={MdPhone} boxSize={6} color="blue.500" />
+              <Box>
+                <Text fontWeight="bold">Phone</Text>
+                <Text>+0123456789, +9876543210</Text>
+              </Box>
+            </HStack>
 
-      <FormControl mb={4}>
-        <FormLabel>{t("email")}</FormLabel>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("enter_email") || ""}
-        />
-      </FormControl>
+            <HStack align="start">
+              <Icon as={MdLocationOn} boxSize={6} color="blue.500" mt={1} />
+              <Box>
+                <Text fontWeight="bold">Office location</Text>
+                <Text>
+                  충청남도 천안시 단대로 119 단국대학교 산학협력관 407호
+                </Text>
+              </Box>
+            </HStack>
 
-      <FormControl mb={6}>
-        <FormLabel>{t("message")}</FormLabel>
-        <Textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={t("enter_message") || ""}
-          rows={5}
-        />
-      </FormControl>
+            {/* 구글 지도 */}
+            <Box w="100%" h="300px" borderRadius="md" overflow="hidden" mt={4}>
+              <iframe
+                title="Google Map"
+                src="https://www.google.com/maps/?entry=ttu&g_ep=EgoyMDI1MTAxMy4wIKXMDSoASAFQAw%3D%3D"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+              ></iframe>
+            </Box>
+          </VStack>
+        </GridItem>
 
-      <Button colorScheme="blue" w="100%" h="50px" onClick={handleSubmit}>
-        {t("submit")}
-      </Button>
+        {/* 오른쪽 영역 (문의 폼) */}
+        <GridItem>
+          <Heading size="md" mb={6}>
+            Leave a message
+          </Heading>
+          <VStack align="stretch" spacing={4}>
+            <HStack spacing={4}>
+              <Box flex="1">
+                <Text fontWeight="semibold">Fname</Text>
+                <Input placeholder="Thomastone" />
+              </Box>
+              <Box flex="1">
+                <Text fontWeight="semibold">Lname</Text>
+                <Input placeholder="Thomastone" />
+              </Box>
+            </HStack>
 
-      {/* 완료 모달 */}
-      <Modal isOpen={isCompleteOpen} onClose={handleConfirm} isCentered>
-        <ModalOverlay />
-        <ModalContent textAlign="center" py={4}>
-          <ModalHeader fontSize="lg">{t("contact_complete_title")}</ModalHeader>
-          <ModalBody>{t("contact_complete_body")}</ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" w="100%" onClick={handleConfirm}>
-              {t("confirm")}
+            <Box>
+              <Text fontWeight="semibold">Email</Text>
+              <Input placeholder="example@thomastone.co.kr" />
+            </Box>
+
+            <Box>
+              <Text fontWeight="semibold">Phone</Text>
+              <Input placeholder="07089087061" />
+            </Box>
+
+            <Box>
+              <Text fontWeight="semibold">Country</Text>
+              <Select placeholder="Select country">
+                <option value="usa">USA</option>
+                <option value="uk">UK</option>
+                <option value="korea">Korea</option>
+                <option value="vietnam">Vietnam</option>
+              </Select>
+            </Box>
+
+            <Box>
+              <Text fontWeight="semibold">Message</Text>
+              <Textarea placeholder="Write your message..." rows={5} />
+            </Box>
+
+            <Button colorScheme="blue" alignSelf="flex-start">
+              Send Message
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </VStack>
+        </GridItem>
+      </Grid>
     </Box>
   );
 }

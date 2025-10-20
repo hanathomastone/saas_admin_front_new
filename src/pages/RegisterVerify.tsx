@@ -1,152 +1,231 @@
-import { useState } from "react";
 import {
   Box,
   Button,
-  Checkbox,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
-  Heading,
+  Image,
   Input,
-  Stack,
   Text,
   useToast,
+  VStack,
+  useBreakpointValue,
+  Select,
+  Heading,
 } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import api from "../api/api";
+
+type VerifyForm = {
+  organizationName: string;
+  organizationPhoneNumber: string;
+};
 
 export default function RegisterVerify() {
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
-  const { t } = useTranslation();
 
-  const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
-  const [terms, setTerms] = useState({
-    service: false,
-    privacy: false,
-    marketing: false,
+  const [form, setForm] = useState<VerifyForm>({
+    organizationName: "",
+    organizationPhoneNumber: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [language, setLanguage] = useState("ko");
 
-  const [allChecked, setAllChecked] = useState(false);
+  const boxPadding = useBreakpointValue({ base: 8, md: 10 });
+  const boxWidth = useBreakpointValue({ base: "90%", sm: "480px" });
 
-  // 전체 동의 체크 시 모든 항목 체크
-  const handleAllCheck = (checked: boolean) => {
-    setAllChecked(checked);
-    setTerms({
-      service: checked,
-      privacy: checked,
-      marketing: checked,
-    });
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language");
+    if (savedLang) {
+      setLanguage(savedLang);
+      i18n.changeLanguage(savedLang);
+    }
+  }, [i18n]);
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value;
+    setLanguage(lang);
+    i18n.changeLanguage(lang);
+    localStorage.setItem("language", lang);
   };
 
-  // 단일 체크 시 전체동의 업데이트
-  const handleSingleCheck = (key: keyof typeof terms, checked: boolean) => {
-    setTerms({ ...terms, [key]: checked });
-    if (checked && Object.values({ ...terms, [key]: checked }).every(Boolean)) {
-      setAllChecked(true);
-    } else {
-      setAllChecked(false);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNext = () => {
-    if (!phone || !name) {
-      toast({ title: t("enter_phone_and_name"), status: "warning" });
+  const handleVerify = async () => {
+    if (!form.organizationName || !form.organizationPhoneNumber) {
+      toast({
+        title: "입력 필요",
+        description: "기관명과 전화번호를 모두 입력해주세요.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
       return;
     }
-    if (!terms.service || !terms.privacy) {
-      toast({ title: t("accept_required_terms"), status: "error" });
-      return;
+
+    try {
+      setLoading(true);
+      // ✅ GET 요청 시 params로 전달해야 함
+      const res = await api.get("/organizations/check-duplicate", {
+        params: form,
+      });
+
+      const isDuplicate = res.data?.response ?? false;
+
+      if (isDuplicate) {
+        toast({
+          title: "이미 가입된 기관입니다.",
+          description: "로그인 페이지로 이동합니다.",
+          status: "info",
+          duration: 2500,
+          isClosable: true,
+        });
+        navigate("/login");
+      } else {
+        toast({
+          title: "확인 완료",
+          description: "회원가입 페이지로 이동합니다.",
+          status: "success",
+          duration: 2500,
+          isClosable: true,
+        });
+        navigate("/register", { state: form });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "확인 실패",
+        description: "서버와의 통신 중 오류가 발생했습니다.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
     }
-    // 인증 성공 → 회원가입 폼으로 이동
-    navigate("/register/form");
   };
 
   return (
-    <Box p={6} maxW="400px" mx="auto">
-      {/* 헤더 */}
-      <Flex align="center" mb={4}>
-        <Button variant="ghost" p={0} minW="auto" onClick={() => navigate(-1)}>
-          ←
-        </Button>
-        <Heading size="sm" ml={2}>
-          {t("verify_member")}
-        </Heading>
-      </Flex>
-
-      {/* Progress */}
-      <Box h="2px" bg="gray.200" mb={6}>
-        <Box h="2px" w="33%" bg="blue.500"></Box>
-      </Box>
-
-      <Heading size="md" mb={2}>
-        {t("verify_member_title")}
-      </Heading>
-      <Text color="gray.600" mb={6}>
-        {t("verify_member_description")}
-      </Text>
-
-      {/* Phone */}
-      <FormControl mb={4}>
-        <FormLabel>{t("enter_phone")}</FormLabel>
-        <Input
-          placeholder={t("phone_placeholder")}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-      </FormControl>
-
-      {/* Name */}
-      <FormControl mb={6}>
-        <FormLabel>{t("enter_name")}</FormLabel>
-        <Input
-          placeholder={t("name_placeholder")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </FormControl>
-
-      {/* 약관 동의 */}
-      <Stack spacing={3} mb={6}>
-        <Checkbox
-          isChecked={allChecked}
-          onChange={(e) => handleAllCheck(e.target.checked)}
-        >
-          {t("agree_all")}
-        </Checkbox>
-        <Divider />
-        <Checkbox
-          isChecked={terms.service}
-          onChange={(e) => handleSingleCheck("service", e.target.checked)}
-        >
-          {t("agree_service")}
-        </Checkbox>
-        <Checkbox
-          isChecked={terms.privacy}
-          onChange={(e) => handleSingleCheck("privacy", e.target.checked)}
-        >
-          {t("agree_privacy")}
-        </Checkbox>
-        <Checkbox
-          isChecked={terms.marketing}
-          onChange={(e) => handleSingleCheck("marketing", e.target.checked)}
-        >
-          {t("agree_marketing")}
-        </Checkbox>
-      </Stack>
-
-      {/* Next Button */}
-      <Button
-        colorScheme="blue"
-        w="100%"
-        h="50px"
-        onClick={handleNext}
-        isDisabled={!phone || !name}
+    <Flex minH="100vh" align="center" justify="center" bg="white" px={4}>
+      <Box
+        w={boxWidth}
+        bg="white"
+        p={boxPadding}
+        borderRadius="xl"
+        boxShadow="0 0 20px rgba(0, 0, 0, 0.08)"
+        border="1px solid"
+        borderColor="gray.200"
       >
-        {t("next")}
-      </Button>
-    </Box>
+        {/* 언어 선택 */}
+        <Flex justify="flex-end" mb={4}>
+          <Select
+            value={language}
+            onChange={handleLanguageChange}
+            w="130px"
+            border="1px solid"
+            borderColor="gray.300"
+            fontSize="sm"
+            borderRadius="md"
+          >
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+            <option value="vi">Tiếng Việt</option>
+          </Select>
+        </Flex>
+
+        {/* 로고 */}
+        <Flex direction="column" align="center" mb={10}>
+          <Image
+            src="/images/DentiGlobal.png"
+            alt="DentiGlobal Logo"
+            h="65px"
+            mb={4}
+          />
+          <Heading size="lg" color="gray.800" fontWeight="bold">
+            기관 정보 확인
+          </Heading>
+        </Flex>
+
+        {/* 입력 필드 */}
+        <VStack spacing={6} align="stretch">
+          <FormControl>
+            <FormLabel fontWeight="semibold" fontSize="md">
+              기관명
+            </FormLabel>
+            <Input
+              name="organizationName" // ✅ 수정됨
+              value={form.organizationName}
+              onChange={handleChange}
+              placeholder="기관명을 입력하세요"
+              size="lg"
+              h="55px"
+              borderColor="gray.300"
+              _focus={{
+                borderColor: "blue.400",
+                boxShadow: "0 0 0 1px #3182ce",
+              }}
+            />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontWeight="semibold" fontSize="md">
+              전화번호
+            </FormLabel>
+            <Input
+              name="organizationPhoneNumber" // ✅ 수정됨
+              value={form.organizationPhoneNumber}
+              onChange={handleChange}
+              placeholder="전화번호를 입력하세요"
+              size="lg"
+              h="55px"
+              borderColor="gray.300"
+              _focus={{
+                borderColor: "blue.400",
+                boxShadow: "0 0 0 1px #3182ce",
+              }}
+            />
+          </FormControl>
+
+          <Button
+            colorScheme="blue"
+            size="lg"
+            w="100%"
+            h="55px"
+            onClick={handleVerify}
+            isLoading={loading}
+            mt={2}
+            fontSize="lg"
+          >
+            확인
+          </Button>
+        </VStack>
+
+        <Text
+          textAlign="center"
+          fontSize="md"
+          color="gray.600"
+          mt={8}
+          lineHeight="tall"
+        >
+          이미 계정이 있으신가요?{" "}
+          <Text
+            as="span"
+            color="blue.500"
+            fontWeight="semibold"
+            cursor="pointer"
+            onClick={() => navigate("/login")}
+          >
+            로그인하기
+          </Text>
+        </Text>
+      </Box>
+    </Flex>
   );
 }

@@ -13,117 +13,71 @@ import {
   TabList,
   Tabs,
   Text,
-  useToast,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import api from "../api"; // ✅ default export인 axios 인스턴스
-import type { AxiosError } from "axios";
-
-interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  isFirstLogin: string;
-  adminId?: number;
-  adminName?: string;
-  adminIsSuper?: string;
-  userId?: number;
-  userName?: string;
-}
-
-interface ApiResponse {
-  rt?: number;
-  rtMsg?: string;
-  response?: LoginResponse;
-}
+import api from "../api"; // ✅ axios 클라이언트
 
 export default function Login() {
   const [language, setLanguage] = useState("ko");
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<"user" | "admin">("user");
-  const [loginId, setLoginId] = useState("");
+  const [activeTab, setActiveTab] = useState<"user" | "admin">("admin"); // ✅ 기본값 관리자
+  const navigate = useNavigate();
+
+  const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const toast = useToast();
-  const navigate = useNavigate();
 
   const handleFocus = (field: string) => setFocusedField(field);
   const handleBlur = () => setFocusedField(null);
 
   const handleLogin = async () => {
     try {
-      const body = { userType: selectedTab, loginId, password };
-      const res = await api.post<ApiResponse>("/login", body, {
-        headers: { "Content-Type": "application/json" },
+      const res = await api.post("/login", {
+        loginId: id,
+        password: password,
+        userType: activeTab, // ✅ 탭 선택값 반영
       });
 
-      console.log("✅ 로그인 응답:", res.data);
-
-      const data: LoginResponse =
-        res.data.response ?? (res.data as LoginResponse);
-
-      if (!data.accessToken) {
-        throw new Error("accessToken이 없습니다.");
+      // ✅ 로그인 실패 시 처리
+      if (res.data.rt) {
+        setError(res.data.rtMsg || "로그인 실패");
+        return;
       }
 
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("userType", selectedTab);
+      // ✅ 공통 토큰 저장
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
 
-      if (selectedTab === "admin") {
-        localStorage.setItem("adminName", data.adminName || "");
-        localStorage.setItem("adminId", data.adminId?.toString() || "");
-      } else {
-        localStorage.setItem("userName", data.userName || "");
-        localStorage.setItem("userId", data.userId?.toString() || "");
+      // ✅ 개인 회원 로그인 처리
+      if (activeTab === "user") {
+        localStorage.setItem("userName", res.data.userName);
+        localStorage.setItem("userId", res.data.userId.toString());
+        navigate("/admin/users");
       }
+      // ✅ 관리자 로그인 처리
+      else {
+        localStorage.setItem("adminName", res.data.adminName);
+        localStorage.setItem("adminId", res.data.adminId.toString());
 
-      toast({
-        title: "로그인 성공",
-        description:
-          selectedTab === "admin"
-            ? `${data.adminName || "관리자"}님 환영합니다!`
-            : `${data.userName || "회원"}님 환영합니다!`,
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
-
-      navigate("/admin/users");
-    } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
-      console.error("❌ 로그인 에러:", axiosError);
-
-      const message =
-        axiosError.response?.data?.rtMsg ??
-        axiosError.response?.data?.response ??
-        axiosError.message ??
-        "아이디 또는 비밀번호를 확인하세요.";
-
-      setError(typeof message === "string" ? message : "로그인 실패");
-
-      toast({
-        title: "로그인 실패",
-        description: typeof message === "string" ? message : "로그인 실패",
-        status: "error",
-        duration: 2500,
-        isClosable: true,
-      });
+        // ✅ 첫 로그인 여부 확인
+        if (res.data.isFirstLogin === "Y") {
+          console.log("첫 로그인 감지 → 기관등록 페이지로 이동");
+          navigate("/register/organization");
+        } else {
+          navigate("/admin/users");
+        }
+      }
+    } catch (err) {
+      console.error("로그인 중 오류 발생:", err);
+      setError("로그인 중 오류가 발생했습니다.");
     }
   };
 
   return (
     <Flex minH="100vh" align="center" justify="center" bg="white" px={6}>
       <Box w="100%" maxW="400px">
-        <Flex justify="space-between" align="center" mb={6}>
-          <Button
-            variant="ghost"
-            p={0}
-            minW="auto"
-            onClick={() => navigate(-1)}
-          >
-            <Image src="/images/back.png" alt="뒤로가기" w="14px" h="14px" />
-          </Button>
-
+        {/* Header */}
+        <Flex justify="flex-end" align="right" mb={6}>
           <Select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
@@ -141,19 +95,22 @@ export default function Login() {
           </Select>
         </Flex>
 
+        {/* 로고 */}
         <Image
-          src="/images/denti_x.png"
+          src="/images/DentiGlobal.png"
           alt="Dentix Logo"
           mx="auto"
           mb={8}
-          h="40px"
+          h="60px"
         />
 
+        {/* Tabs */}
         <Tabs
           variant="unstyled"
           align="center"
           mb={6}
-          onChange={(index) => setSelectedTab(index === 0 ? "user" : "admin")}
+          defaultIndex={1} // ✅ 기본 선택: 관리자 탭
+          onChange={(index) => setActiveTab(index === 0 ? "user" : "admin")}
         >
           <TabList borderBottom="1px solid" borderColor="gray.200">
             <Tab
@@ -179,19 +136,20 @@ export default function Login() {
           </TabList>
         </Tabs>
 
+        {/* 입력 필드 */}
         <Box mb={4}>
           <FormControl>
             <FormLabel>아이디</FormLabel>
             <Input
               type="text"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
+              value={id}
+              onChange={(e) => setId(e.target.value)}
               onFocus={() => handleFocus("id")}
               onBlur={handleBlur}
-              borderColor={focusedField === "id" ? "red.400" : "gray.300"}
-              focusBorderColor="red.400"
+              borderColor={focusedField === "id" ? "blue.400" : "gray.300"}
+              focusBorderColor="blue.400"
               _hover={{
-                borderColor: focusedField === "id" ? "red.400" : "gray.400",
+                borderColor: focusedField === "id" ? "blue.400" : "gray.400",
               }}
             />
           </FormControl>
@@ -206,15 +164,16 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               onFocus={() => handleFocus("pw")}
               onBlur={handleBlur}
-              borderColor={focusedField === "pw" ? "red.400" : "gray.300"}
-              focusBorderColor="red.400"
+              borderColor={focusedField === "pw" ? "blue.400" : "gray.300"}
+              focusBorderColor="blue.400"
               _hover={{
-                borderColor: focusedField === "pw" ? "red.400" : "gray.400",
+                borderColor: focusedField === "pw" ? "blue.400" : "gray.400",
               }}
             />
           </FormControl>
         </Box>
 
+        {/* 로그인 버튼 */}
         <Button
           colorScheme="blue"
           w="100%"
@@ -225,14 +184,16 @@ export default function Login() {
           로그인
         </Button>
 
+        {/* 에러 메시지 */}
         {error && (
           <Text color="red.500" textAlign="center" mb={4}>
             {error}
           </Text>
         )}
 
+        {/* Footer */}
         <Flex justify="center" gap={4} mt={4} fontSize="sm" color="gray.500">
-          <RouterLink to="/register/verify">
+          <RouterLink to="/register">
             <Text as="span" color="blue.500" cursor="pointer">
               회원가입
             </Text>

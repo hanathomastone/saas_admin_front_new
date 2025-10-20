@@ -18,6 +18,8 @@
     "dayjs": "^1.11.18",
     "framer-motion": "^11.3.30",
     "i18next": "^25.5.2",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "i18next-http-backend": "^3.0.2",
     "keyframes": "^2.3.0",
     "react": "^18.3.1",
     "react-calendar": "^6.0.0",

@@ -1,0 +1,65 @@
+{
+  "contents": {
+    "title": "Oral Health Contents",
+    "subtitle": "Discover personalized oral care content powered by AI.",
+    "error_load": "Failed to load contents.",
+    "empty": "No contents available in this category."
+  },
+  "login": {
+    "successTitle": "Login Successful",
+    "successMsg": "Welcome, {{name}}!",
+    "errorTitle": "Login Failed",
+    "errorMsg": "Please check your ID or password.",
+    "userTab": "User Login",
+    "adminTab": "Admin Login",
+    "idLabel": "Login ID",
+    "idPlaceholder": "Enter your ID",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "loginButton": "Login",
+    "registerButton": "Sign Up",
+    "findPasswordButton": "Forgot Password?"
+  },
+  "common": {
+    "language": "Language",
+    "korean": "Korean",
+    "english": "English",
+    "vietnamese": "Vietnamese"
+  },
+  "service": {
+    "plaque": "Plaque Detection Service",
+    "gingivitis": "Gingivitis Detection Service",
+    "oral_ai": "Oral AI Analysis Service"
+  },
+  "oralCheck": {
+    "title": "Oral Check Service",
+    "plaqueDetection": "Plaque Detection",
+    "realTime": "Real-time Capture",
+    "realTimeDesc": "Use the camera to capture your oral condition in real-time.",
+    "upload": "Upload Image",
+    "uploadDesc": "Upload your oral photo for analysis.",
+    "guideTitle": "Capture Guide",
+    "guideAlt": "Oral Capture Guide Image",
+    "guideConfirm": "Start Capture",
+    "guide1": "Take photos in bright light.",
+    "guide2": "Open your mouth wide to capture all teeth.",
+    "guide3": "Keep your device steady to avoid blurring."
+  },
+  "oralUpload": {
+    "title": "Upload Oral Image",
+    "select": "Select Image",
+    "dragdrop": "Drag or click to upload your image.",
+    "submit": "Analyze",
+    "error_title": "Upload Failed",
+    "error_desc": "An error occurred while uploading.",
+    "no_file_title": "No File Selected",
+    "no_file_desc": "Please select an image to upload.",
+    "result_title": "Analysis Result",
+    "result_success": "Analysis Successful",
+    "result_fail": "Analysis Failed",
+    "remaining": "💡 Remaining Uses",
+    "detail": "View Result Details",
+    "close": "Close",
+    "retry": "Retry"
+  }
+}

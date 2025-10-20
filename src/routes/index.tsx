@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import RegisterForm from "../pages/RegisterForm";
 import UserListPage from "../pages/UserListPage";
 import OrganizationEditPage from "../pages/OrganizationEditPage";
+import RegisterVerify from "../pages/RegisterVerify";
 import UserStastics from "../pages/UserStatisticsPage";
 // 레이아웃 & 라우팅 헬퍼
 import MainLayout from "../components/MainLayout";
@@ -12,6 +13,11 @@ import MainLayout from "../components/MainLayout";
 // import SubscriptionUsagePage from "../pages/SubscriptionUsagePage";
 import SubscriptionUsagePage from "../pages/SubscriptionUsagePage";
 import SubscriptionEdit from "../pages/SubscriptionEdit";
+import ServiceUsageDashboard from "../pages/ServiceUsageDashboard";
+import ContactPage from "../pages/Contact";
+import AwsUsageDashboard from "../pages/AwsUsageDashboard";
+import OrganizationRegister from "../pages/OrganizationRegister";
+import UserUsagePage from "../pages/userUsagePage";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -19,7 +25,9 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       {/* <Route path="/oral-check" element={<OralCheckPage />} /> */}
       <Route path="/register" element={<RegisterForm />} />{" "}
-      {/* <Route path="/users" element={<UserListPage />} /> */}
+      <Route path="/register/verify" element={<RegisterVerify />} />{" "}
+      <Route path="/register/organization" element={<OrganizationRegister />} />
+      {""}
       <Route
         path="/organization/edit"
         element={
@@ -62,6 +70,54 @@ export default function AppRoutes() {
           </MainLayout>
         }
       ></Route>
+      <Route
+        path="/admin/usage-service/info"
+        element={
+          <MainLayout>
+            <ServiceUsageDashboard />
+          </MainLayout>
+        }
+      ></Route>
+      <Route
+        path="/admin/contact"
+        element={
+          <MainLayout>
+            <ContactPage />
+          </MainLayout>
+        }
+      ></Route>
+      <Route
+        path="/admin/aws"
+        element={
+          <MainLayout>
+            <AwsUsageDashboard />
+          </MainLayout>
+        }
+      ></Route>
+      <Route
+        path="/admin/subscription/users"
+        element={
+          <MainLayout>
+            <UserUsagePage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/admin/organization/edit"
+        element={
+          <MainLayout>
+            <OrganizationEditPage />
+          </MainLayout>
+        }
+      ></Route>
+      {/* <Route
+        path="/admin/usage-service/info"
+        element={
+          <MainLayout>
+            <ServiceUsageDashboard />
+          </MainLayout>
+        }
+      ></Route> */}
     </Routes>
   );
 }

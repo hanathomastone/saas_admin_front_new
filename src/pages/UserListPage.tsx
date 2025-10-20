@@ -1,9 +1,7 @@
 import {
   Box,
   Button,
-  Collapse,
   Flex,
-  Grid,
   Input,
   Select,
   Text,
@@ -16,22 +14,25 @@ import {
   useBreakpointValue,
   useDisclosure,
   Spinner,
+  SimpleGrid,
   useToast,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+// import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import api from "../api/api";
 
 interface UserItem {
-  userId: number;
-  userLoginIdentifier: string;
-  userName: string;
-  oralCheckResultTotalType: string | null;
-  oralCheckDate: string | null;
-  questionnaireDate: string | null;
-  isVerify: string;
-  patientPhoneNumber: string;
-  serviceName: string | null;
+  userId: number; // 사용자 ID
+  userLoginIdentifier: string; // 로그인 아이디
+  userName: string; // 사용자 이름
+  userGender: "M" | "W"; // 성별 (남/여)
+  oralStatus: string | null; // 문진표 유형 (예: "F,F,F")
+  oralStatusTitle: string | null;
+  oralCheckResultTotalType: string | null; // 잇몸상태 (HEALTHY 등)
+  oralCheckDate: string | null; // 구강검진일
+  questionnaireDate: string | null; // 문진표 검사일
+  isVerify: "Y" | "N"; // 인증 여부
+  serviceNames: string[]; // 이용 중인 서비스 목록
 }
 
 interface Paging {
@@ -70,7 +71,7 @@ export default function UserListPage() {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // ✅ 검색창 접기/펼치기 상태
-  const { isOpen, onToggle, onOpen, onClose } = useDisclosure();
+  const { onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     if (isMobile) onClose();
@@ -185,132 +186,109 @@ export default function UserListPage() {
         borderWidth="1px"
         borderColor="gray.200"
       >
-        {/* 헤더 */}
-        <Flex justify="space-between" align="center" mb={2}>
-          <Text fontWeight="bold" fontSize="lg">
-            검색 조건
+        {/* ✅ 제목 */}
+        <Text fontWeight="bold" fontSize="lg" mb={6}>
+          검색조건
+        </Text>
+
+        {/* 🔹 검색어 영역 */}
+        <Box mb={6}>
+          <Text fontWeight="semibold" mb={2}>
+            검색어
           </Text>
-          {isMobile && (
-            <Button
-              size="sm"
-              variant="ghost"
-              rightIcon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-              onClick={onToggle}
-            >
-              {isOpen ? "접기" : "펼치기"}
-            </Button>
-          )}
-        </Flex>
+          <Input
+            placeholder="아이디 혹은 이름"
+            value={filters.keyword}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, keyword: e.target.value }))
+            }
+          />
+        </Box>
 
-        {/* Collapse (모바일만 접힘) */}
-        <Collapse in={isOpen} animateOpacity>
-          <Box>
-            <Text fontWeight="bold" mb={2}>
-              검색어
-            </Text>
-            <Input
-              placeholder="아이디 혹은 이름"
-              value={filters.keyword}
+        {/* 🔹 필터 영역 */}
+        <Box>
+          <Text fontWeight="semibold" mb={2}>
+            필터
+          </Text>
+
+          {/* 1행: 잇몸상태, 문진표 유형, 성별, 인증여부 */}
+          <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4} mb={4}>
+            <Select
+              placeholder="잇몸상태"
+              value={filters.oralStatus}
               onChange={(e) =>
-                setFilters((f) => ({ ...f, keyword: e.target.value }))
+                setFilters((f) => ({ ...f, oralStatus: e.target.value }))
               }
-              mb={4}
+            >
+              <option value="HEALTHY">건강</option>
+              <option value="DANGER">위험</option>
+            </Select>
+
+            <Select
+              placeholder="문진표 유형"
+              value={filters.questionnaireType}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  questionnaireType: e.target.value,
+                }))
+              }
+            >
+              <option value="ADULT">성인</option>
+              <option value="CHILD">소아</option>
+            </Select>
+
+            <Select
+              placeholder="성별"
+              value={filters.gender}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, gender: e.target.value }))
+              }
+            >
+              <option value="M">남성</option>
+              <option value="W">여성</option>
+            </Select>
+
+            <Select
+              placeholder="인증여부"
+              value={filters.verify}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, verify: e.target.value }))
+              }
+            >
+              <option value="Y">인증됨</option>
+              <option value="N">미인증</option>
+            </Select>
+          </SimpleGrid>
+
+          {/* 2행: 날짜 선택 */}
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+            <Input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, startDate: e.target.value }))
+              }
             />
+            <Input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, endDate: e.target.value }))
+              }
+            />
+          </SimpleGrid>
 
-            <Text fontWeight="bold" mb={2}>
-              필터
-            </Text>
-
-            {/* ✅ 반응형 Grid */}
-            <Grid
-              templateColumns={{
-                base: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
-              }}
-              gap={4}
-              mb={6}
-            >
-              <Select
-                placeholder="잇몸상태"
-                value={filters.oralStatus}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, oralStatus: e.target.value }))
-                }
-              >
-                <option value="HEALTHY">건강</option>
-                <option value="DANGER">위험</option>
-              </Select>
-
-              <Select
-                placeholder="문진표 유형"
-                value={filters.questionnaireType}
-                onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    questionnaireType: e.target.value,
-                  }))
-                }
-              >
-                <option value="ADULT">성인</option>
-                <option value="CHILD">소아</option>
-              </Select>
-
-              <Select
-                placeholder="성별"
-                value={filters.gender}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, gender: e.target.value }))
-                }
-              >
-                <option value="M">남성</option>
-                <option value="W">여성</option>
-              </Select>
-
-              <Select
-                placeholder="인증여부"
-                value={filters.verify}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, verify: e.target.value }))
-                }
-              >
-                <option value="Y">인증됨</option>
-                <option value="N">미인증</option>
-              </Select>
-            </Grid>
-
-            {/* 📅 기간 설정 */}
-            <Grid
-              templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)" }}
-              gap={4}
-              mb={6}
-            >
-              <Input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, startDate: e.target.value }))
-                }
-              />
-              <Input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, endDate: e.target.value }))
-                }
-              />
-            </Grid>
-
-            <Flex justify="flex-end" gap={3} flexWrap="wrap">
-              <Button variant="outline" onClick={handleReset}>
-                초기화
-              </Button>
-              <Button colorScheme="blue" onClick={fetchUsers}>
-                검색
-              </Button>
-            </Flex>
-          </Box>
-        </Collapse>
+          {/* ✅ 버튼 줄바꿈 후 하단 정렬 */}
+          <Flex justify="flex-end" gap={3}>
+            <Button variant="outline" onClick={handleReset}>
+              초기화
+            </Button>
+            <Button colorScheme="blue" onClick={fetchUsers}>
+              검색
+            </Button>
+          </Flex>
+        </Box>
       </Box>
 
       {/* 📋 검색 결과 테이블 */}
@@ -364,7 +342,7 @@ export default function UserListPage() {
                     <Td>{(page - 1) * size + idx + 1}</Td>
                     <Td>{user.userLoginIdentifier}</Td>
                     <Td>{user.userName}</Td>
-                    {!isMobile && <Td>{filters.questionnaireType || "-"}</Td>}
+                    <Td>{user.oralStatusTitle || "-"}</Td>
                     <Td>{user.questionnaireDate || "-"}</Td>
                     {!isMobile && (
                       <Td>{user.oralCheckResultTotalType || "-"}</Td>
@@ -391,7 +369,11 @@ export default function UserListPage() {
                         </Button>
                       )}
                     </Td>
-                    <Td>{user.serviceName || "-"}</Td>
+                    <Td>
+                      {user.serviceNames && user.serviceNames.length > 0
+                        ? user.serviceNames.join(", ")
+                        : "-"}
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>
