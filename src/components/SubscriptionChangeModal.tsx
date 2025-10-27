@@ -22,6 +22,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/api";
 
+/** ✅ 구독 플랜 정보 타입 */
 interface Plan {
   id: number; // subscriptionPlanId
   planName: string; // small | growth | midsize 등
@@ -31,17 +32,15 @@ interface Plan {
   planSort: number;
 }
 
+/** ✅ Props */
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   currentPlan: string; // 현재 구독중인 플랜명
-  onConfirm: (
-    planId: number,
-    planName: string,
-    cycle: "monthly" | "yearly"
-  ) => Promise<void>;
+  onConfirm: (planId: number) => Promise<void>; // ✅ 단일 인자만 받음
 }
 
+/** ✅ 구독 변경 모달 */
 export default function SubscriptionChangeModal({
   isOpen,
   onClose,
@@ -55,11 +54,7 @@ export default function SubscriptionChangeModal({
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-  /**
-   * ✅ Hook은 항상 컴포넌트 최상단에서 호출되어야 함
-   * plans 배열을 기반으로 planName별 그룹화
-   */
-  // ✅ useMemo: 항상 호출
+  /** ✅ 플랜 목록 그룹화 (월간/연간) */
   const groupedPlans = useMemo(() => {
     const map: Record<
       string,
@@ -75,9 +70,7 @@ export default function SubscriptionChangeModal({
       .sort((a, b) => (a.sort || 0) - (b.sort || 0));
   }, [plans]);
 
-  /**
-   * ✅ 모달이 열릴 때만 플랜 정보 요청
-   */
+  /** ✅ 모달 열릴 때 플랜 목록 조회 */
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
@@ -96,21 +89,15 @@ export default function SubscriptionChangeModal({
       .finally(() => setLoading(false));
   }, [isOpen, toast]);
 
-  /**
-   * ✅ 구독 변경 실행
-   */
+  /** ✅ 구독 변경 실행 */
   const handleChangePlan = async () => {
     if (!selectedPlan) return;
     setIsSaving(true);
     try {
-      await onConfirm(
-        selectedPlan.id,
-        selectedPlan.planName,
-        selectedPlan.planCycle
-      );
+      await onConfirm(selectedPlan.id); // ✅ 단일 인자만 전달
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error("❌ 구독 변경 실패:", err);
       toast({
         title: "구독 변경 실패",
         description: "서버와 통신 중 문제가 발생했습니다.",
@@ -123,6 +110,7 @@ export default function SubscriptionChangeModal({
     }
   };
 
+  /** ✅ 렌더링 */
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="5xl" isCentered>
       <ModalOverlay />
@@ -139,7 +127,7 @@ export default function SubscriptionChangeModal({
               isChecked={isYearly}
               onChange={(e) => {
                 setIsYearly(e.target.checked);
-                setSelectedPlan(null); // 토글 시 선택 초기화
+                setSelectedPlan(null); // ✅ 토글 시 선택 초기화
               }}
             />
             <Text fontSize="sm" color={isYearly ? "blue.600" : "gray.500"}>

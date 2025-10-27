@@ -98,7 +98,8 @@ export default function SubscriptionEditPage() {
       });
       onClose();
       navigate("/admin/subscription/usage");
-    } catch (err) {
+    } catch (error) {
+      console.log(error);
       toast({
         title: "구독 변경 실패",
         status: "error",

@@ -18,21 +18,58 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-// import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { useTranslation } from "react-i18next";
 import api from "../api/api";
+import type { i18n as I18nType } from "i18next";
+
+/** ✅ 날짜 입력 커스텀 컴포넌트 (다국어 placeholder 지원) */
+function DateInput({
+  value,
+  onChange,
+  i18n,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  i18n: I18nType;
+}) {
+  const [type, setType] = useState<"text" | "date">("text");
+
+  const getPlaceholder = () => {
+    switch (i18n.language) {
+      case "ko":
+        return "연도-월-일";
+      case "vi":
+        return "Năm-Tháng-Ngày";
+      default:
+        return "YYYY-MM-DD";
+    }
+  };
+
+  return (
+    <Input
+      type={type}
+      onFocus={() => setType("date")}
+      onBlur={() => !value && setType("text")}
+      placeholder={getPlaceholder()}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
 
 interface UserItem {
-  userId: number; // 사용자 ID
-  userLoginIdentifier: string; // 로그인 아이디
-  userName: string; // 사용자 이름
-  userGender: "M" | "W"; // 성별 (남/여)
-  oralStatus: string | null; // 문진표 유형 (예: "F,F,F")
+  userId: number;
+  userLoginIdentifier: string;
+  userName: string;
+  userGender: "M" | "W";
+  oralStatus: string | null;
   oralStatusTitle: string | null;
-  oralCheckResultTotalType: string | null; // 잇몸상태 (HEALTHY 등)
-  oralCheckDate: string | null; // 구강검진일
-  questionnaireDate: string | null; // 문진표 검사일
-  isVerify: "Y" | "N"; // 인증 여부
-  serviceNames: string[]; // 이용 중인 서비스 목록
+  oralCheckResultTotalType: string | null;
+  oralCheckDate: string | null;
+  questionnaireDate: string | null;
+  questionnaireType?: string | null;
+  isVerify: "Y" | "N";
+  serviceNames: string[];
 }
 
 interface Paging {
@@ -41,16 +78,10 @@ interface Paging {
   totalElements: number;
 }
 
-interface ApiResponse {
-  rt: number;
-  rtMsg: string;
-  response: {
-    paging: Paging;
-    userList: UserItem[];
-  };
-}
-
 export default function UserListPage() {
+  const { t, i18n } = useTranslation();
+  const toast = useToast();
+
   const [filters, setFilters] = useState({
     keyword: "",
     oralStatus: "",
@@ -63,22 +94,27 @@ export default function UserListPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [paging, setPaging] = useState<Paging | null>(null);
   const [page, setPage] = useState(1);
-  const [size, setSize] = useState(50); // ✅ 페이지당 표시 개수
+  const [size, setSize] = useState(50);
   const [loading, setLoading] = useState(false);
-  const toast = useToast();
   const [verifyingUserId, setVerifyingUserId] = useState<number | null>(null);
-  // ✅ 반응형 감지
-  const isMobile = useBreakpointValue({ base: true, md: false });
 
-  // ✅ 검색창 접기/펼치기 상태
+  const isMobile = useBreakpointValue({ base: true, md: false });
   const { onOpen, onClose } = useDisclosure();
+
+  /** ✅ 문진표 유형 매핑 (다국어 가능) */
+  const questionnaireTypeMap: Record<string, string> = {
+    ADULT_ORAL_MANAGEMENT: t("userList.type.adultOral"),
+    ADULT_ORTHO_MANAGEMENT: t("userList.type.adultOrtho"),
+    CHILD_ORAL_MANAGEMENT: t("userList.type.childOral"),
+    CHILD_ORTHO_MANAGEMENT: t("userList.type.childOrtho"),
+  };
 
   useEffect(() => {
     if (isMobile) onClose();
     else onOpen();
   }, [isMobile]);
 
-  // ✅ 사용자 목록 조회
+  /** ✅ 사용자 목록 조회 */
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -86,34 +122,38 @@ export default function UserListPage() {
       params.append("page", page.toString());
       params.append("size", size.toString());
 
-      if (filters.keyword) params.append("keyword", filters.keyword);
+      // ✅ 백엔드 필드명에 맞게
+      if (filters.keyword)
+        params.append("userIdentifierOrName", filters.keyword);
       if (filters.oralStatus) params.append("oralStatus", filters.oralStatus);
-      if (filters.questionnaireType)
-        params.append("questionnaireType", filters.questionnaireType);
-      if (filters.gender) params.append("gender", filters.gender);
-      if (filters.verify) params.append("verify", filters.verify);
+      if (filters.gender) params.append("userGender", filters.gender);
+      if (filters.verify) params.append("isVerify", filters.verify);
       if (filters.startDate) params.append("startDate", filters.startDate);
       if (filters.endDate) params.append("endDate", filters.endDate);
 
-      const res = await api.get<ApiResponse>(
-        `/admin/user?${params.toString()}`
-      );
+      const res = await api.get(`/admin/user?${params.toString()}`);
+      const response = res.data?.response;
+      if (!response) throw new Error("Invalid response format");
 
-      setUsers(res.data.response.userList);
-      setPaging(res.data.response.paging);
+      setUsers(response.userList || []);
+      setPaging(response.paging || null);
     } catch (e) {
       console.error("❌ 사용자 검색 실패:", e);
+      toast({
+        title: t("common.error"),
+        description: t("userList.toast.loadFail"),
+        status: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ 자동 전체 조회
   useEffect(() => {
     fetchUsers();
-  }, [page, size]); // ✅ size가 변경되면 재조회
+  }, [page, size]);
 
-  // ✅ 초기화
+  /** ✅ 필터 초기화 */
   const handleReset = () => {
     setFilters({
       keyword: "",
@@ -128,55 +168,36 @@ export default function UserListPage() {
     fetchUsers();
   };
 
-  // ✅ 페이지네이션
-  const handlePrevPage = () => {
-    if (page > 1) setPage((prev) => prev - 1);
-  };
-
-  const handleNextPage = () => {
-    if (paging && page < paging.totalPages) setPage((prev) => prev + 1);
-  };
-
-  // ✅ 페이지당 표시 개수 변경
-  const handleSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSize = Number(e.target.value);
-    setSize(newSize);
-    setPage(1); // 첫 페이지로 초기화
-  };
-
-  //인증 처리 함수 (로딩 + 토스트 포함)
+  /** ✅ 인증 처리 */
   const handleVerifyUser = async (userId: number) => {
     try {
-      setVerifyingUserId(userId); // 로딩 시작
+      setVerifyingUserId(userId);
       await api.put(`/admin/user/verify?userId=${userId}`);
 
       toast({
-        title: "인증 완료",
-        description: "해당 사용자가 성공적으로 인증되었습니다.",
+        title: t("userList.verifySuccessTitle"),
+        description: t("userList.verifySuccessDesc"),
         status: "success",
         duration: 2000,
-        isClosable: true,
       });
 
-      // ✅ 목록 새로고침
       fetchUsers();
     } catch (err) {
       console.error("❌ 사용자 인증 실패:", err);
       toast({
-        title: "인증 실패",
-        description: "인증 중 오류가 발생했습니다.",
+        title: t("userList.verifyFailTitle"),
+        description: t("userList.verifyFailDesc"),
         status: "error",
         duration: 2500,
-        isClosable: true,
       });
     } finally {
-      setVerifyingUserId(null); // 로딩 종료
+      setVerifyingUserId(null);
     }
   };
 
   return (
     <Box p={{ base: 3, md: 6 }} bg="gray.50" minH="100vh">
-      {/* 🔍 검색 조건 영역 */}
+      {/* 🔍 검색 조건 */}
       <Box
         bg="white"
         p={{ base: 4, md: 6 }}
@@ -186,18 +207,17 @@ export default function UserListPage() {
         borderWidth="1px"
         borderColor="gray.200"
       >
-        {/* ✅ 제목 */}
         <Text fontWeight="bold" fontSize="lg" mb={6}>
-          검색조건
+          {t("userList.search")}
         </Text>
 
-        {/* 🔹 검색어 영역 */}
+        {/* 검색어 */}
         <Box mb={6}>
           <Text fontWeight="semibold" mb={2}>
-            검색어
+            {t("userList.keyword")}
           </Text>
           <Input
-            placeholder="아이디 혹은 이름"
+            placeholder={t("userList.placeholder.keyword")}
             value={filters.keyword}
             onChange={(e) =>
               setFilters((f) => ({ ...f, keyword: e.target.value }))
@@ -205,27 +225,26 @@ export default function UserListPage() {
           />
         </Box>
 
-        {/* 🔹 필터 영역 */}
+        {/* 필터 */}
         <Box>
           <Text fontWeight="semibold" mb={2}>
-            필터
+            {t("userList.filters.title")}
           </Text>
 
-          {/* 1행: 잇몸상태, 문진표 유형, 성별, 인증여부 */}
           <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4} mb={4}>
             <Select
-              placeholder="잇몸상태"
+              placeholder={t("userList.filters.oralStatus")}
               value={filters.oralStatus}
               onChange={(e) =>
                 setFilters((f) => ({ ...f, oralStatus: e.target.value }))
               }
             >
-              <option value="HEALTHY">건강</option>
-              <option value="DANGER">위험</option>
+              <option value="HEALTHY">{t("userList.status.healthy")}</option>
+              <option value="DANGER">{t("userList.status.danger")}</option>
             </Select>
 
             <Select
-              placeholder="문진표 유형"
+              placeholder={t("userList.filters.questionnaire")}
               value={filters.questionnaireType}
               onChange={(e) =>
                 setFilters((f) => ({
@@ -234,64 +253,59 @@ export default function UserListPage() {
                 }))
               }
             >
-              <option value="ADULT">성인</option>
-              <option value="CHILD">소아</option>
+              <option value="ADULT">{t("userList.type.adult")}</option>
+              <option value="CHILD">{t("userList.type.child")}</option>
             </Select>
 
             <Select
-              placeholder="성별"
+              placeholder={t("userList.filters.gender")}
               value={filters.gender}
               onChange={(e) =>
                 setFilters((f) => ({ ...f, gender: e.target.value }))
               }
             >
-              <option value="M">남성</option>
-              <option value="W">여성</option>
+              <option value="M">{t("userList.gender.male")}</option>
+              <option value="W">{t("userList.gender.female")}</option>
             </Select>
 
             <Select
-              placeholder="인증여부"
+              placeholder={t("userList.filters.verify")}
               value={filters.verify}
               onChange={(e) =>
                 setFilters((f) => ({ ...f, verify: e.target.value }))
               }
             >
-              <option value="Y">인증됨</option>
-              <option value="N">미인증</option>
+              <option value="Y">{t("userList.verify.verified")}</option>
+              <option value="N">{t("userList.verify.unverified")}</option>
             </Select>
           </SimpleGrid>
 
-          {/* 2행: 날짜 선택 */}
+          {/* ✅ 날짜 선택 (커스텀 DateInput 적용) */}
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
-            <Input
-              type="date"
+            <DateInput
               value={filters.startDate}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, startDate: e.target.value }))
-              }
+              onChange={(val) => setFilters((f) => ({ ...f, startDate: val }))}
+              i18n={i18n}
             />
-            <Input
-              type="date"
+            <DateInput
               value={filters.endDate}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, endDate: e.target.value }))
-              }
+              onChange={(val) => setFilters((f) => ({ ...f, endDate: val }))}
+              i18n={i18n}
             />
           </SimpleGrid>
 
-          {/* ✅ 버튼 줄바꿈 후 하단 정렬 */}
           <Flex justify="flex-end" gap={3}>
             <Button variant="outline" onClick={handleReset}>
-              초기화
+              {t("common.cancel")}
             </Button>
             <Button colorScheme="blue" onClick={fetchUsers}>
-              검색
+              {t("userList.searchBtn")}
             </Button>
           </Flex>
         </Box>
       </Box>
 
-      {/* 📋 검색 결과 테이블 */}
+      {/* 📋 검색 결과 */}
       <Box
         bg="white"
         p={{ base: 4, md: 6 }}
@@ -307,33 +321,35 @@ export default function UserListPage() {
           <>
             <Flex justify="space-between" mb={4} flexWrap="wrap" gap={2}>
               <Text fontWeight="bold">
-                검색 결과 (총 {paging?.totalElements || 0}명)
+                {t("userList.result", { count: paging?.totalElements || 0 })}
               </Text>
 
-              {/* ✅ 페이지당 개수 선택 */}
               <Select
                 w="150px"
                 size="sm"
                 value={size}
-                onChange={handleSizeChange}
+                onChange={(e) => {
+                  setSize(Number(e.target.value));
+                  setPage(1);
+                }}
               >
-                <option value="10">10개씩 보기</option>
-                <option value="30">30개씩 보기</option>
-                <option value="50">50개씩 보기</option>
+                <option value="10">{t("userList.pageSize.10")}</option>
+                <option value="30">{t("userList.pageSize.30")}</option>
+                <option value="50">{t("userList.pageSize.50")}</option>
               </Select>
             </Flex>
 
             <Table size="sm" minW="800px">
               <Thead bg="gray.100">
                 <Tr>
-                  <Th>번호</Th>
-                  <Th>아이디</Th>
-                  <Th>이름</Th>
-                  {!isMobile && <Th>문진표 유형</Th>}
-                  <Th>문진표 검사일</Th>
-                  {!isMobile && <Th>잇몸상태</Th>}
-                  <Th>인증여부</Th>
-                  <Th>이용중인 서비스</Th>
+                  <Th>#</Th>
+                  <Th>{t("userList.columns.id")}</Th>
+                  <Th>{t("userList.columns.name")}</Th>
+                  {!isMobile && <Th>{t("userList.columns.questionnaire")}</Th>}
+                  <Th>{t("userList.columns.date")}</Th>
+                  {!isMobile && <Th>{t("userList.columns.oralStatus")}</Th>}
+                  <Th>{t("userList.columns.verify")}</Th>
+                  <Th>{t("userList.columns.services")}</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -342,8 +358,17 @@ export default function UserListPage() {
                     <Td>{(page - 1) * size + idx + 1}</Td>
                     <Td>{user.userLoginIdentifier}</Td>
                     <Td>{user.userName}</Td>
-                    <Td>{user.oralStatusTitle || "-"}</Td>
-                    <Td>{user.questionnaireDate || "-"}</Td>
+                    <Td>
+                      {questionnaireTypeMap[user.questionnaireType || ""] ||
+                        "-"}
+                    </Td>
+                    <Td>
+                      {user.questionnaireDate
+                        ? new Date(user.questionnaireDate).toLocaleDateString(
+                            i18n.language
+                          )
+                        : "-"}
+                    </Td>
                     {!isMobile && (
                       <Td>{user.oralCheckResultTotalType || "-"}</Td>
                     )}
@@ -355,24 +380,24 @@ export default function UserListPage() {
                           variant="outline"
                           isDisabled
                         >
-                          인증됨
+                          {t("userList.verify.verified")}
                         </Button>
                       ) : (
                         <Button
                           size="xs"
                           colorScheme="blue"
                           variant="outline"
-                          isLoading={verifyingUserId === user.userId} // ✅ 로딩 표시
+                          isLoading={verifyingUserId === user.userId}
                           onClick={() => handleVerifyUser(user.userId)}
                         >
-                          인증하기
+                          {t("userList.verify.action")}
                         </Button>
                       )}
                     </Td>
                     <Td>
-                      {user.serviceNames && user.serviceNames.length > 0
+                      {user.serviceNames?.length
                         ? user.serviceNames.join(", ")
-                        : "-"}
+                        : t("common.noData")}
                     </Td>
                   </Tr>
                 ))}
@@ -382,21 +407,23 @@ export default function UserListPage() {
             {/* ✅ 페이지네이션 */}
             <Flex justify="center" align="center" mt={6} gap={4}>
               <Button
-                onClick={handlePrevPage}
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
                 isDisabled={page === 1}
                 size="sm"
               >
-                이전
+                {t("userList.pagination.prev")}
               </Button>
               <Text fontWeight="medium">
                 {page} / {paging?.totalPages || 1}
               </Text>
               <Button
-                onClick={handleNextPage}
+                onClick={() =>
+                  setPage((p) => Math.min(p + 1, paging?.totalPages || 1))
+                }
                 isDisabled={page === paging?.totalPages}
                 size="sm"
               >
-                다음
+                {t("userList.pagination.next")}
               </Button>
             </Flex>
           </>

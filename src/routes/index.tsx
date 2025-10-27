@@ -5,7 +5,6 @@ import Login from "../pages/Login";
 import RegisterForm from "../pages/RegisterForm";
 import UserListPage from "../pages/UserListPage";
 import OrganizationEditPage from "../pages/OrganizationEditPage";
-import RegisterVerify from "../pages/RegisterVerify";
 import UserStastics from "../pages/UserStatisticsPage";
 // 레이아웃 & 라우팅 헬퍼
 import MainLayout from "../components/MainLayout";
@@ -18,14 +17,18 @@ import ContactPage from "../pages/Contact";
 import AwsUsageDashboard from "../pages/AwsUsageDashboard";
 import OrganizationRegister from "../pages/OrganizationRegister";
 import UserUsagePage from "../pages/userUsagePage";
+import Contact from "../pages/Contact";
+import SubscriptionSuper from "../pages/SuperAdmin/SubscriptionSuper";
+import SuperUserStatisticPage from "../pages/SuperAdmin/SuperUserStatisticPage";
+import SuperUsageInfoPage from "../pages/SuperAdmin/SuperUsageInfoPage";
+// import AwsUsageDashboard from "../pages/AwsUsageDashboard";
 export default function AppRoutes() {
   return (
     <Routes>
       {/* ✅ 인증 불필요 */}
       <Route path="/login" element={<Login />} />
-      {/* <Route path="/oral-check" element={<OralCheckPage />} /> */}
+      <Route path="/contact" element={<Contact />} />
       <Route path="/register" element={<RegisterForm />} />{" "}
-      <Route path="/register/verify" element={<RegisterVerify />} />{" "}
       <Route path="/register/organization" element={<OrganizationRegister />} />
       {""}
       <Route
@@ -110,6 +113,38 @@ export default function AppRoutes() {
           </MainLayout>
         }
       ></Route>
+      <Route
+        path="/admin/subscription/super"
+        element={
+          <MainLayout>
+            <SubscriptionSuper />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/admin/users/statistic/super"
+        element={
+          <MainLayout>
+            <SuperUserStatisticPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/admin/usage-service/info/super"
+        element={
+          <MainLayout>
+            <SuperUsageInfoPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/admin/aws/info/super"
+        element={
+          <MainLayout>
+            <AwsUsageDashboard />
+          </MainLayout>
+        }
+      />
       {/* <Route
         path="/admin/usage-service/info"
         element={

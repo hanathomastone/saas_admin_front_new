@@ -1,244 +1,201 @@
-import { useEffect, useState } from "react";
 import {
   Box,
-  Flex,
+  Grid,
   Heading,
-  Select,
-  Card,
-  Stat,
-  StatLabel,
-  StatNumber,
-  SimpleGrid,
-  Text,
   Spinner,
+  Text,
+  useToast,
+  Card,
+  CardHeader,
+  CardBody,
+  Select,
+  Flex,
 } from "@chakra-ui/react";
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
-  Legend,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import api from "../api/api";
 
 interface MetricPoint {
-  time: string;
+  timestamp: string;
   value: number;
 }
 
-export default function AwsUsageDashboard() {
-  const [ec2Cpu, setEc2Cpu] = useState<MetricPoint[]>([]);
-  const [rdsCpu, setRdsCpu] = useState<MetricPoint[]>([]);
-  const [network, setNetwork] = useState<
-    { time: string; in: number; out: number }[]
-  >([]);
-  const [s3, setS3] = useState<{ time: string; size: number }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState("Year");
+interface ResourceMetric {
+  resourceType: string;
+  metricName: string;
+  points: MetricPoint[];
+}
 
-  // 데이터 불러오기
+interface AwsMetricsResponse {
+  metrics: ResourceMetric[];
+}
+type RangeType = "1h" | "6h" | "24h";
+export default function AwsMetricsDashboard() {
+  const toast = useToast();
+  const [data, setData] = useState<AwsMetricsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<RangeType>("1h");
+
+  // ✅ 단위 변환 함수
+  const formatValue = (metric: string, value: number) => {
+    if (value === 0 || value == null) return "0";
+    if (metric.includes("CPU") || metric.includes("Memory")) {
+      return `${value.toFixed(2)}%`;
+    }
+    if (metric.includes("Network")) {
+      return value > 1024 * 1024
+        ? `${(value / 1024 / 1024).toFixed(2)} MB`
+        : `${(value / 1024).toFixed(2)} KB`;
+    }
+    if (metric.includes("Storage") || metric.includes("BucketSize")) {
+      return `${(value / 1024 / 1024 / 1024).toFixed(2)} GB`;
+    }
+    return value.toFixed(2);
+  };
+
+  // ✅ 평균 계산 함수
+  const getAverage = (points: MetricPoint[]) => {
+    if (!points || points.length === 0) return 0;
+    const sum = points.reduce((acc, p) => acc + p.value, 0);
+    return sum / points.length;
+  };
+
+  // ✅ 데이터 요청
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchMetrics() {
       setLoading(true);
       try {
-        const [ec2, rds, netIn, netOut, s3data] = await Promise.all([
-          axios.get<MetricPoint[]>(
-            "/api/aws/metrics/ec2/cpu?instanceId=i-00de45ec7525e7e38"
-          ),
-          axios.get<MetricPoint[]>(
-            "/api/aws/metrics/rds/cpu?dbInstanceId=mydb-instance"
-          ),
-          axios.get<MetricPoint[]>(
-            "/api/aws/metrics/ec2/network-in?instanceId=i-00de45ec7525e7e38"
-          ),
-          axios.get<MetricPoint[]>(
-            "/api/aws/metrics/ec2/network-out?instanceId=i-00de45ec7525e7e38"
-          ),
-          axios.get<MetricPoint[]>(
-            "/api/aws/metrics/s3/bucket-size?bucketName=my-s3-bucket"
-          ),
-        ]);
-
-        const networkMerged = netIn.data.map((item, i) => ({
-          time: item.time,
-          in: item.value,
-          out: netOut.data[i]?.value ?? 0,
-        }));
-
-        const s3mapped = s3data.data.map((d) => ({
-          time: d.time,
-          size: d.value / 1024 ** 3, // bytes → GB
-        }));
-
-        setEc2Cpu(ec2.data);
-        setRdsCpu(rds.data);
-        setNetwork(networkMerged);
-        setS3(s3mapped);
+        const res = await api.get("/api/aws/metrics/summary", {
+          params: {
+            ec2InstanceId: "i-00de45ec7525e7e38",
+            rdsInstanceId: "aurora-denti-global-dev",
+            s3BucketName: "denti-global-singapore",
+            range: range, // (백엔드가 지원하지 않아도 무시됨)
+          },
+        });
+        setData(res.data);
       } catch (err) {
-        console.error("메트릭 불러오기 실패:", err);
+        console.log(err);
+        toast({
+          title: "AWS 메트릭 조회 실패",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       } finally {
         setLoading(false);
       }
-    };
-    fetchData();
-  }, []);
+    }
 
-  const formatTime = (t: string) =>
-    new Date(t).toLocaleDateString("ko-KR", {
-      month: "short",
-      day: "numeric",
-    });
+    fetchMetrics();
+  }, [range]);
 
-  // 마지막 값 가져오기
-  const lastValue = (arr: MetricPoint[]) =>
-    arr.length ? arr[arr.length - 1].value.toFixed(2) : "-";
+  // ✅ 로딩 중
+  if (loading) {
+    return (
+      <Box textAlign="center" py={10}>
+        <Spinner size="xl" />
+        <Text mt={4}>AWS 리소스 현황 불러오는 중...</Text>
+      </Box>
+    );
+  }
 
-  const lastGB = (arr: { size: number }[]) =>
-    arr.length ? arr.slice(-1)[0].size.toFixed(2) + " GB" : "-";
+  // ✅ 데이터 없음
+  if (!data || !data.metrics || data.metrics.length === 0) {
+    return (
+      <Box textAlign="center" py={10}>
+        <Text>표시할 데이터가 없습니다.</Text>
+      </Box>
+    );
+  }
 
   return (
-    <Box bg="#F7FAFC" minH="100vh" p={10}>
-      <Heading mb={8}>AWS Usage Dashboard</Heading>
+    <Box p={6}>
+      <Flex justify="space-between" align="center" mb={6}>
+        <Heading size="lg">AWS 리소스 현황 대시보드</Heading>
 
-      {loading ? (
-        <Flex align="center" justify="center" h="60vh">
-          <Spinner size="xl" />
-        </Flex>
-      ) : (
-        <Flex flexDir="column" gap={10}>
-          {/* 상단 KPI 카드 */}
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-            <Card p={6} borderRadius="xl" shadow="sm" bg="white">
-              <Stat>
-                <StatLabel>EC2 CPU Utilization</StatLabel>
-                <StatNumber color="blue.500" fontSize="2xl">
-                  {lastValue(ec2Cpu)}%
-                </StatNumber>
-              </Stat>
+        {/* ✅ 조회 기간 선택 */}
+        <Select
+          w="150px"
+          value={range}
+          onChange={(e) => setRange(e.target.value as RangeType)}
+        >
+          <option value="1h">최근 1시간</option>
+          <option value="6h">최근 6시간</option>
+          <option value="24h">최근 24시간</option>
+        </Select>
+      </Flex>
+
+      <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
+        {data.metrics.map((metric, idx) => {
+          const chartData = metric.points.map((p) => ({
+            time: new Date(p.timestamp).toLocaleTimeString("ko-KR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            value: p.value,
+          }));
+
+          const avg = getAverage(metric.points);
+          const avgDisplay = formatValue(metric.metricName, avg);
+
+          return (
+            <Card key={idx} boxShadow="md" borderRadius="xl" p={2}>
+              <CardHeader pb={0}>
+                <Flex justify="space-between" align="center">
+                  <Text fontWeight="bold" fontSize="lg">
+                    {metric.resourceType} — {metric.metricName}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    평균: {avgDisplay}
+                  </Text>
+                </Flex>
+              </CardHeader>
+              <CardBody>
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="time" />
+                      <YAxis
+                        tickFormatter={(v) =>
+                          metric.metricName.includes("Network")
+                            ? `${(v / 1024).toFixed(0)}K`
+                            : v.toFixed(0)
+                        }
+                      />
+                      <Tooltip
+                        formatter={(v) =>
+                          formatValue(metric.metricName, v as number)
+                        }
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#3182CE"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box textAlign="center" py={8}>
+                    <Text color="gray.500">데이터가 없습니다.</Text>
+                  </Box>
+                )}
+              </CardBody>
             </Card>
-
-            <Card p={6} borderRadius="xl" shadow="sm" bg="white">
-              <Stat>
-                <StatLabel>RDS CPU Utilization</StatLabel>
-                <StatNumber color="green.500" fontSize="2xl">
-                  {lastValue(rdsCpu)}%
-                </StatNumber>
-              </Stat>
-            </Card>
-
-            <Card p={6} borderRadius="xl" shadow="sm" bg="white">
-              <Stat>
-                <StatLabel>S3 Bucket Size</StatLabel>
-                <StatNumber color="orange.400" fontSize="2xl">
-                  {lastGB(s3)}
-                </StatNumber>
-              </Stat>
-            </Card>
-          </SimpleGrid>
-
-          {/* LINE CHART */}
-          <Card p={6} borderRadius="2xl" shadow="sm" bg="white">
-            <Flex justify="space-between" align="center" mb={4}>
-              <Box>
-                <Text fontWeight="bold" color="gray.600">
-                  LINE CHART
-                </Text>
-                <Text fontSize="sm" color="gray.500">
-                  EC2 & RDS CPU Utilization
-                </Text>
-              </Box>
-              <Select
-                w="120px"
-                size="sm"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              >
-                <option>Year</option>
-                <option>Month</option>
-                <option>Week</option>
-              </Select>
-            </Flex>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={ec2Cpu}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDF2F7" />
-                <XAxis dataKey="time" tickFormatter={formatTime} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  data={ec2Cpu}
-                  name="EC2 CPU (%)"
-                  stroke="#3182CE"
-                  dot={{ r: 3 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  data={rdsCpu}
-                  name="RDS CPU (%)"
-                  stroke="#38A169"
-                  dot={{ r: 3 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-
-          {/* STACKED BAR CHART */}
-          <Card p={6} borderRadius="2xl" shadow="sm" bg="white">
-            <Flex justify="space-between" align="center" mb={4}>
-              <Box>
-                <Text fontWeight="bold" color="gray.600">
-                  STACKED BAR CHART
-                </Text>
-                <Text fontSize="sm" color="gray.500">
-                  Network I/O (In/Out) & S3 Bucket Size
-                </Text>
-              </Box>
-              <Select
-                w="120px"
-                size="sm"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              >
-                <option>Year</option>
-                <option>Month</option>
-                <option>Week</option>
-              </Select>
-            </Flex>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={network}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDF2F7" />
-                <XAxis dataKey="time" tickFormatter={formatTime} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar
-                  dataKey="in"
-                  name="Network In (Bytes)"
-                  stackId="a"
-                  fill="#63B3ED"
-                />
-                <Bar
-                  dataKey="out"
-                  name="Network Out (Bytes)"
-                  stackId="a"
-                  fill="#4299E1"
-                />
-                {/* s3 크기 추가 시 별도 데이터 머지 가능 */}
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Flex>
-      )}
+          );
+        })}
+      </Grid>
     </Box>
   );
 }

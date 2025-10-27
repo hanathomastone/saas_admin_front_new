@@ -23,6 +23,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 interface AdminForm {
   adminLoginIdentifier: string;
@@ -34,6 +35,7 @@ export default function RegisterForm() {
   const navigate = useNavigate();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<AdminForm>({
@@ -45,8 +47,11 @@ export default function RegisterForm() {
     null
   );
 
+  /** ✅ 반응형 설정 */
   const boxPadding = useBreakpointValue({ base: 6, md: 10 });
   const boxWidth = useBreakpointValue({ base: "90%", sm: "450px" });
+  const headingSize = useBreakpointValue({ base: "lg", md: "xl" });
+  const buttonHeight = useBreakpointValue({ base: "45px", md: "55px" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -60,8 +65,8 @@ export default function RegisterForm() {
       !form.adminPhoneNumber
     ) {
       toast({
-        title: "입력 필요",
-        description: "모든 항목을 입력해주세요.",
+        title: t("register.requiredTitle"),
+        description: t("register.requiredDesc"),
         status: "warning",
         duration: 2500,
         isClosable: true,
@@ -79,8 +84,8 @@ export default function RegisterForm() {
         onOpen();
       } else {
         toast({
-          title: "가입 실패",
-          description: res.data.rtMsg || "서버 오류가 발생했습니다.",
+          title: t("register.failTitle"),
+          description: res.data.rtMsg || t("register.serverError"),
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -89,8 +94,8 @@ export default function RegisterForm() {
     } catch (error) {
       console.error(error);
       toast({
-        title: "서버 통신 오류",
-        description: "API 요청 중 문제가 발생했습니다.",
+        title: t("register.networkErrorTitle"),
+        description: t("register.networkErrorDesc"),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -101,39 +106,45 @@ export default function RegisterForm() {
   };
 
   return (
-    <Flex minH="100vh" align="center" justify="center" bg="white" px={4}>
+    <Flex
+      minH="100vh"
+      align="center"
+      justify="center"
+      bgGradient="linear(to-br, blue.50, white)"
+      px={4}
+    >
       <Box
         w={boxWidth}
         bg="white"
         p={boxPadding}
-        borderRadius="xl"
-        boxShadow="0 0 15px rgba(0, 0, 0, 0.08)"
+        borderRadius="2xl"
+        boxShadow="0 4px 15px rgba(0, 0, 0, 0.08)"
         border="1px solid"
         borderColor="gray.200"
       >
-        {/* 로고 */}
+        {/* ✅ 로고 */}
         <Flex direction="column" align="center" mb={10}>
           <Image
             src="/images/DentiGlobal.png"
             alt="DentiGlobal Logo"
-            h="65px"
+            h={{ base: "50px", md: "65px" }}
             mb={4}
           />
-          <Heading size="lg" color="gray.800" fontWeight="bold">
-            관리자 회원가입
+          <Heading size={headingSize} color="gray.800" fontWeight="bold">
+            {t("register.title")}
           </Heading>
         </Flex>
 
-        {/* 입력 폼 */}
+        {/* ✅ 입력 폼 */}
         <VStack spacing={6} align="stretch">
           <FormControl isRequired>
-            <FormLabel fontWeight="semibold">아이디</FormLabel>
+            <FormLabel fontWeight="semibold">{t("register.idLabel")}</FormLabel>
             <Input
               name="adminLoginIdentifier"
               value={form.adminLoginIdentifier}
               onChange={handleChange}
-              placeholder="아이디를 입력하세요"
-              h="50px"
+              placeholder={t("register.idPlaceholder")}
+              h={buttonHeight}
               borderColor="gray.300"
               _focus={{
                 borderColor: "blue.400",
@@ -143,13 +154,15 @@ export default function RegisterForm() {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel fontWeight="semibold">이름</FormLabel>
+            <FormLabel fontWeight="semibold">
+              {t("register.nameLabel")}
+            </FormLabel>
             <Input
               name="adminName"
               value={form.adminName}
               onChange={handleChange}
-              placeholder="이름을 입력하세요"
-              h="50px"
+              placeholder={t("register.namePlaceholder")}
+              h={buttonHeight}
               borderColor="gray.300"
               _focus={{
                 borderColor: "blue.400",
@@ -159,13 +172,15 @@ export default function RegisterForm() {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel fontWeight="semibold">핸드폰 번호</FormLabel>
+            <FormLabel fontWeight="semibold">
+              {t("register.phoneLabel")}
+            </FormLabel>
             <Input
               name="adminPhoneNumber"
               value={form.adminPhoneNumber}
               onChange={handleChange}
-              placeholder="010-0000-0000"
-              h="50px"
+              placeholder={t("register.phonePlaceholder")}
+              h={buttonHeight}
               borderColor="gray.300"
               _focus={{
                 borderColor: "blue.400",
@@ -174,27 +189,27 @@ export default function RegisterForm() {
             />
           </FormControl>
 
-          {/* 버튼 영역 */}
+          {/* ✅ 버튼 영역 */}
           <HStack spacing={4} mt={6}>
             <Button
               colorScheme="blue"
               w="50%"
-              h="55px"
+              h={buttonHeight}
               fontSize="lg"
               onClick={handleSubmit}
               isLoading={loading}
             >
-              가입하기
+              {t("register.submitButton")}
             </Button>
             <Button
               w="50%"
-              h="55px"
+              h={buttonHeight}
               fontSize="lg"
               bg="gray.300"
               _hover={{ bg: "gray.400" }}
               onClick={() => navigate(-1)}
             >
-              이전화면
+              {t("register.backButton")}
             </Button>
           </HStack>
         </VStack>
@@ -205,18 +220,18 @@ export default function RegisterForm() {
         <ModalOverlay />
         <ModalContent borderRadius="xl" p={4}>
           <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
-            관리자 계정이 생성되었습니다.
+            {t("register.modalTitle")}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody textAlign="center" pb={6}>
             <Text mb={3} fontSize="md" color="gray.700">
-              발급된 임시 비밀번호는 아래와 같습니다.
+              {t("register.tempPasswordDesc")}
             </Text>
             <Text fontSize="2xl" fontWeight="bold" color="blue.600">
               {generatedPassword}
             </Text>
             <Text mt={4} fontSize="sm" color="gray.500">
-              로그인 후 반드시 비밀번호를 변경하세요.
+              {t("register.changePasswordNotice")}
             </Text>
             <Button
               mt={6}
@@ -227,7 +242,7 @@ export default function RegisterForm() {
                 navigate("/login");
               }}
             >
-              로그인 페이지로 이동
+              {t("register.goToLogin")}
             </Button>
           </ModalBody>
         </ModalContent>

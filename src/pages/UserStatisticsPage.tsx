@@ -8,6 +8,7 @@ import {
   Text,
   Spinner,
   useToast,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import {
@@ -22,42 +23,39 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import api from "../api/api";
 
-interface StatisticResponse {
-  userSignUpCount: {
-    countAll: number;
-    countMan: number;
-    countWoman: number;
-  };
-  averageState: string;
-  oralCheckCount: number;
-  oralCheckAverage: number;
-  oralCheckResultTypeCount: {
-    countHealthy: number;
-    countGood: number;
-    countAttention: number;
-    countDanger: number;
-  };
-  questionnaireAllCount: number;
-  allQuestionnaireResultTypeCount: Record<string, number>;
+interface OralCheckStat {
+  oralCheckResultType: string;
+  count: number;
+  countHealthy: number;
+  countGood: number;
+  countAttention: number;
+  countDanger: number;
 }
 
-interface ApiResponse {
-  rt: number;
-  rtMsg: string;
-  response: StatisticResponse;
+interface StatisticResponse {
+  organizationName: string;
+  totalUsers: number;
+  maleUsers: number;
+  femaleUsers: number;
+  newUsers: number;
+  oralCheckStats: OralCheckStat[];
 }
 
 export default function UserStatisticsPage() {
+  const { t } = useTranslation();
   const toast = useToast();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<StatisticResponse | null>(null);
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const COLORS = ["#4F9BFF", "#FF9DB1"];
 
+  // ✅ 통계 데이터 불러오기
   const fetchStatistics = async () => {
     try {
       setLoading(true);
@@ -65,12 +63,15 @@ export default function UserStatisticsPage() {
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
 
-      const res = await api.get<ApiResponse>(`/admin/statistic?${params}`);
-      setData(res.data.response);
+      const res = await api.get<StatisticResponse>(
+        `/admin/statistic/org/users?${params}`
+      );
+      setData(res.data);
     } catch (error) {
       console.error("❌ 통계 조회 실패:", error);
       toast({
-        title: "데이터를 불러오지 못했습니다.",
+        title: t("userStats.toast.fail"),
+        description: t("userStats.toast.failDetail"),
         status: "error",
         duration: 2500,
         isClosable: true,
@@ -84,6 +85,7 @@ export default function UserStatisticsPage() {
     fetchStatistics();
   }, []);
 
+  // ✅ 빠른 기간 선택
   const handleQuickSelect = (days: number | "all") => {
     const now = new Date();
     if (days === "all") {
@@ -105,30 +107,28 @@ export default function UserStatisticsPage() {
     );
   }
 
+  // ✅ 그래프 데이터 구성
   const genderData = [
-    { name: "남성", value: data.userSignUpCount.countMan },
-    { name: "여성", value: data.userSignUpCount.countWoman },
+    { name: t("userStats.gender.male"), value: data.maleUsers },
+    { name: t("userStats.gender.female"), value: data.femaleUsers },
   ];
+
+  const manRate = (data.maleUsers / data.totalUsers) * 100 || 0;
+  const womanRate = (data.femaleUsers / data.totalUsers) * 100 || 0;
+
+  const oralStat = data.oralCheckStats[0] || {
+    countHealthy: 0,
+    countGood: 0,
+    countAttention: 0,
+    countDanger: 0,
+  };
 
   const gumStatusData = [
-    { name: "건강", value: data.oralCheckResultTypeCount.countHealthy },
-    { name: "양호", value: data.oralCheckResultTypeCount.countGood },
-    { name: "주의", value: data.oralCheckResultTypeCount.countAttention },
-    { name: "위험", value: data.oralCheckResultTypeCount.countDanger },
+    { name: t("userStats.gum.healthy"), value: oralStat.countHealthy },
+    { name: t("userStats.gum.good"), value: oralStat.countGood },
+    { name: t("userStats.gum.attention"), value: oralStat.countAttention },
+    { name: t("userStats.gum.danger"), value: oralStat.countDanger },
   ];
-
-  const questionnaireData = Object.entries(
-    data.allQuestionnaireResultTypeCount
-  ).map(([key, value]) => ({
-    name: key.replace("count", ""),
-    value,
-  }));
-
-  const manRate =
-    (data.userSignUpCount.countMan / data.userSignUpCount.countAll) * 100 || 0;
-  const womanRate =
-    (data.userSignUpCount.countWoman / data.userSignUpCount.countAll) * 100 ||
-    0;
 
   return (
     <Box bg="gray.50" minH="100vh" p={{ base: 4, md: 8 }}>
@@ -145,51 +145,53 @@ export default function UserStatisticsPage() {
       >
         <Flex justify="space-between" align="center" flexWrap="wrap" gap={3}>
           <Text fontWeight="bold" fontSize="md">
-            통계기간설정
+            {t("userStats.period.title")}
           </Text>
+
           <Flex gap={2} flexWrap="wrap">
             <Button size="sm" onClick={() => handleQuickSelect(0)}>
-              오늘
+              {t("userStats.period.today")}
             </Button>
             <Button size="sm" onClick={() => handleQuickSelect(7)}>
-              1주일
+              {t("userStats.period.week")}
             </Button>
             <Button size="sm" onClick={() => handleQuickSelect(30)}>
-              1개월
+              {t("userStats.period.month")}
             </Button>
             <Button size="sm" onClick={() => handleQuickSelect(90)}>
-              3개월
+              {t("userStats.period.quarter")}
             </Button>
             <Button size="sm" onClick={() => handleQuickSelect(365)}>
-              1년
+              {t("userStats.period.year")}
             </Button>
             <Button size="sm" onClick={() => handleQuickSelect("all")}>
-              전체
+              {t("userStats.period.all")}
             </Button>
+
             <Input
               type="date"
-              w="160px"
+              w="150px"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
             <Text>~</Text>
             <Input
               type="date"
-              w="160px"
+              w="150px"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
             <Button variant="outline" onClick={() => window.location.reload()}>
-              초기화
+              {t("common.reset")}
             </Button>
             <Button colorScheme="blue" onClick={fetchStatistics}>
-              조회
+              {t("common.search")}
             </Button>
           </Flex>
         </Flex>
       </Box>
 
-      {/* 📊 메인 통계 */}
+      {/* 📊 상단 요약 */}
       <Grid
         templateColumns={{ base: "1fr", lg: "2fr 1fr" }}
         gap={6}
@@ -199,7 +201,7 @@ export default function UserStatisticsPage() {
         {/* 전체 남녀 가입률 */}
         <Box bg="white" p={6} rounded="lg" shadow="sm">
           <Heading size="md" mb={4} textAlign="center">
-            전체 남녀 가입률
+            {t("userStats.genderDistribution")}
           </Heading>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -207,7 +209,7 @@ export default function UserStatisticsPage() {
                 data={genderData}
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
+                outerRadius={isMobile ? 80 : 100}
                 dataKey="value"
                 label
               >
@@ -222,74 +224,44 @@ export default function UserStatisticsPage() {
 
         {/* 가입자 수 카드 */}
         <Grid gap={4}>
-          <Box
-            bg="white"
-            rounded="lg"
-            shadow="sm"
-            p={6}
-            textAlign="center"
-            flex="1"
-          >
-            <Text fontWeight="bold">전체 가입자 수</Text>
+          <Box bg="white" rounded="lg" shadow="sm" p={6} textAlign="center">
+            <Text fontWeight="bold">{t("userStats.totalUsers")}</Text>
             <Text fontSize="2xl" fontWeight="bold" mt={2}>
-              {data.userSignUpCount.countAll}명
+              {data.totalUsers}
             </Text>
           </Box>
 
           <Box bg="white" rounded="lg" shadow="sm" p={6} textAlign="center">
-            <Text fontWeight="bold">남성 가입자</Text>
+            <Text fontWeight="bold">{t("userStats.maleUsers")}</Text>
             <Text fontSize="2xl" color="blue.500" fontWeight="bold" mt={2}>
-              {data.userSignUpCount.countMan}명 ({manRate.toFixed(1)}%)
+              {data.maleUsers} ({manRate.toFixed(1)}%)
             </Text>
           </Box>
 
           <Box bg="white" rounded="lg" shadow="sm" p={6} textAlign="center">
-            <Text fontWeight="bold">여성 가입자</Text>
+            <Text fontWeight="bold">{t("userStats.femaleUsers")}</Text>
             <Text fontSize="2xl" color="pink.500" fontWeight="bold" mt={2}>
-              {data.userSignUpCount.countWoman}명 ({womanRate.toFixed(1)}%)
+              {data.femaleUsers} ({womanRate.toFixed(1)}%)
             </Text>
           </Box>
         </Grid>
       </Grid>
 
-      {/* 하단 그래프 */}
-      <Grid
-        templateColumns={{ base: "1fr", lg: "repeat(2, 1fr)" }}
-        gap={6}
-        alignItems="stretch"
-      >
-        {/* 평균 구강촬영 상태 */}
-        <Box bg="white" p={6} rounded="lg" shadow="sm">
-          <Heading size="md" mb={4}>
-            평균 구강촬영 상태
-          </Heading>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={gumStatusData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#4F9BFF" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Box>
-
-        {/* 평균 문진표 유형 */}
-        <Box bg="white" p={6} rounded="lg" shadow="sm">
-          <Heading size="md" mb={4}>
-            평균 문진표 유형
-          </Heading>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={questionnaireData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#7CC8FF" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Box>
-      </Grid>
+      {/* 하단 구강검사 상태 그래프 */}
+      <Box bg="white" p={6} rounded="lg" shadow="sm">
+        <Heading size="md" mb={4}>
+          {t("userStats.gumDistribution")}
+        </Heading>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={gumStatusData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="value" fill="#4F9BFF" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Box>
     </Box>
   );
 }

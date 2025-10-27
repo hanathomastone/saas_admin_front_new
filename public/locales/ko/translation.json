@@ -1,194 +1,247 @@
 {
-  "contents": {
-    "title": "구강 건강 콘텐츠",
-    "subtitle": "AI 기반 맞춤형 구강 관리 콘텐츠를 확인해 보세요.",
-    "error_load": "콘텐츠를 불러오는 중 오류가 발생했습니다.",
-    "empty": "해당 카테고리에 콘텐츠가 없습니다."
-  },
   "login": {
-    "successTitle": "로그인 성공",
-    "successMsg": "{{name}}님, 환영합니다!",
-    "errorTitle": "로그인 실패",
-    "errorMsg": "아이디 또는 비밀번호를 다시 확인해주세요.",
-    "userTab": "사용자 로그인",
-    "adminTab": "관리자 로그인",
-    "idLabel": "로그인 ID",
+    "title": "로그인",
+    "userTab": "개인 회원",
+    "adminTab": "관리자 회원",
+    "idLabel": "아이디",
     "idPlaceholder": "아이디를 입력하세요",
     "passwordLabel": "비밀번호",
     "passwordPlaceholder": "비밀번호를 입력하세요",
     "loginButton": "로그인",
     "registerButton": "회원가입",
-    "findPasswordButton": "비밀번호 찾기"
+    "findPasswordButton": "비밀번호 찾기",
+    "contactButton": "문의하기",
+    "successTitle": "로그인 성공",
+    "successMsg": "{{name}}님 환영합니다.",
+    "errorTitle": "로그인 실패",
+    "errorMsg": "아이디 또는 비밀번호를 확인해주세요.",
+    "networkError": "서버 통신 중 오류가 발생했습니다.",
+    "languageSelect": "언어 선택",
+    "firstLoginRedirect": "계속하려면 기관 등록을 완료해주세요."
+  },
+  "register": {
+    "organizationRedirect": "기관 등록 페이지로 이동",
+    "title": "관리자 회원가입",
+    "idLabel": "아이디",
+    "idPlaceholder": "아이디를 입력하세요",
+    "nameLabel": "이름",
+    "namePlaceholder": "이름을 입력하세요",
+    "phoneLabel": "핸드폰 번호",
+    "phonePlaceholder": "010-0000-0000",
+    "submitButton": "가입하기",
+    "backButton": "이전화면",
+    "modalTitle": "관리자 계정이 생성되었습니다.",
+    "tempPasswordDesc": "발급된 임시 비밀번호는 아래와 같습니다.",
+    "changePasswordNotice": "로그인 후 반드시 비밀번호를 변경하세요.",
+    "goToLogin": "로그인 페이지로 이동",
+    "requiredTitle": "입력 필요",
+    "requiredDesc": "모든 항목을 입력해주세요.",
+    "failTitle": "가입 실패",
+    "serverError": "서버 오류가 발생했습니다.",
+    "networkErrorTitle": "서버 통신 오류",
+    "networkErrorDesc": "API 요청 중 문제가 발생했습니다."
   },
   "common": {
-    "language": "언어 선택",
     "korean": "한국어",
-    "english": "English",
-    "vietnamese": "Tiếng Việt"
-  },
-  "user": {
-    "title": "사용자 설정",
-    "load_failed": "사용자 정보를 불러오지 못했습니다.",
-    "gender_male": "남성",
-    "gender_female": "여성",
-    "no_phone": "전화번호 미등록",
-    "change_password": "비밀번호 변경",
-    "current_service": "이용중인 서비스",
-    "change_service": "서비스 변경하기",
-    "service_changed": "서비스가 변경되었습니다.",
-    "change_failed": "서비스 변경에 실패했습니다.",
-    "loading_service": "서비스 정보를 불러오는 중...",
-    "service_period": "이용기간: {{start}} ~ {{end}}",
-    "service_price": "요금: ₩{{price}} / {{period}}",
-    "other_settings": "기타 설정",
-    "marketing_consent": "마케팅 수신 동의",
-    "auto_login": "자동 로그인",
-    "toothbrushing_count": "하루 양치 횟수",
-    "logout": "로그아웃",
-    "change_service_modal": "서비스 변경하기",
-    "service_option_1": "플라그 검출 서비스",
-    "service_option_2": "치은염 검출 서비스",
-    "service_option_3": "구강 AI 분석 서비스",
-    "changing": "변경 중...",
+    "english": "영어",
+    "vietnamese": "베트남어",
     "confirm": "확인",
-    "cancel": "취소"
+    "cancel": "취소",
+    "loading": "불러오는 중...",
+    "error": "오류 발생",
+    "noData": "데이터가 없습니다.",
+    "reset": "초기화",
+    "search": "조회"
   },
-
-  "service": {
-    "plaque": "플라그 검출 서비스",
-    "gingivitis": "치은염 검출 서비스",
-    "oral_ai": "구강 AI 분석 서비스"
+  "footer": {
+    "findPassword": "비밀번호 찾기",
+    "contact": "문의하기"
   },
-  "oralCheck": {
-    "title": "구강검진 서비스",
-    "plaqueDetection": "플라그 검출",
-    "realTime": "실시간 촬영",
-    "realTimeDesc": "카메라를 이용하여 실시간으로 구강 상태를 촬영합니다.",
-    "upload": "이미지 업로드",
-    "uploadDesc": "촬영한 구강 이미지를 업로드하여 분석을 진행합니다.",
-    "guideTitle": "촬영 가이드",
-    "guideAlt": "구강 촬영 가이드 이미지",
-    "guideConfirm": "촬영 시작",
-    "guide1": "밝은 조명에서 촬영하세요.",
-    "guide2": "입을 충분히 벌리고 치아 전체가 나오도록 하세요.",
-    "guide3": "흔들리지 않도록 기기를 고정하세요."
-  },
-  "oralUpload": {
-    "title": "구강 이미지 업로드",
-    "select": "이미지 선택",
-    "dragdrop": "이미지를 드래그하거나 클릭하여 업로드하세요.",
-    "submit": "분석하기",
-    "error_title": "업로드 실패",
-    "error_desc": "이미지를 업로드하는 중 문제가 발생했습니다.",
-    "no_file_title": "파일 없음",
-    "no_file_desc": "업로드할 이미지를 먼저 선택하세요.",
-    "result_title": "분석 결과",
-    "result_success": "분석 성공",
-    "result_fail": "분석 실패",
-    "remaining": "💡 남은 이용 횟수",
-    "detail": "결과 상세 보기",
-    "close": "닫기",
-    "retry": "재촬영하기"
-  },
-  "find": {
-    "title": "비밀번호 찾기",
-    "description": "아이디와 비밀번호 찾기 질문을 입력해 주세요.",
-    "idLabel": "아이디",
-    "idPlaceholder": "아이디를 입력하세요",
-    "questionLabel": "비밀번호 찾기 질문",
-    "questionPlaceholder": "질문을 선택하세요",
-    "answerLabel": "답변",
-    "answerPlaceholder": "답변을 입력하세요",
-    "submitButton": "확인",
-    "backToLogin": "로그인 페이지로 돌아가기",
-
-    "warningTitle": "입력 필요",
-    "warningMsg": "모든 항목을 입력해 주세요.",
-
-    "successTitle": "인증 성공",
-    "successMsg": "비밀번호 재설정 페이지로 이동합니다.",
-
-    "errorTitle": "오류 발생",
-    "errorMsg": "비밀번호 찾기 중 문제가 발생했습니다.",
-    "errorFetchQuestions": "질문 목록을 불러오지 못했습니다.",
-    "errorNoMatch": "입력하신 정보와 일치하는 계정을 찾을 수 없습니다."
-  },
-  "verify": {
-    "title": "회원 정보 확인",
-    "nameLabel": "이름",
-    "namePlaceholder": "이름을 입력하세요",
+  "organization": {
+    "editTitle": "기관 정보 수정",
+    "updateButton": "수정하기",
+    "backButton": "돌아가기",
+    "noDataTitle": "기관 정보가 없습니다.",
+    "noDataDesc": "기관 등록 페이지로 이동합니다.",
+    "loadErrorTitle": "기관 정보를 불러오지 못했습니다.",
+    "serverError": "서버 오류가 발생했습니다.",
+    "updateSuccess": "기관 정보가 수정되었습니다.",
+    "updateFail": "수정 실패",
+    "registerTitle": "기관 등록",
+    "nameLabel": "기관명",
+    "namePlaceholder": "기관명을 입력하세요",
     "phoneLabel": "전화번호",
     "phonePlaceholder": "전화번호를 입력하세요",
-    "button": "확인",
-
-    "warningTitle": "입력 필요",
-    "warningMsg": "이름과 전화번호를 모두 입력해주세요.",
-
-    "successTitle": "회원가입 가능",
-    "successMsg": "가입 가능한 사용자입니다. 회원가입 페이지로 이동합니다.",
-
-    "existTitle": "이미 등록된 회원",
-    "existMsg": "이미 회원으로 등록되어 있습니다. 로그인 페이지로 이동합니다.",
-
-    "errorTitle": "오류 발생",
-    "errorMsg": "회원 정보 확인 중 오류가 발생했습니다.",
-
-    "alreadyAccount": "이미 계정이 있으신가요?",
-    "signIn": "로그인하기"
+    "subscriptionLabel": "구독상품",
+    "yearlyPlanTab": "연간 요금제",
+    "monthlyPlanTab": "월간 요금제",
+    "maxCount": "최대 {{count}}건",
+    "registerButton": "등록하기",
+    "prevButton": "이전화면",
+    "registerSuccessTitle": "기관 등록 완료 🎉",
+    "planName": "구독 상품: {{name}}",
+    "startDate": "시작일",
+    "renewalDate": "갱신일",
+    "requiredWarning": "모든 항목을 입력해주세요.",
+    "registerFail": "등록 실패",
+    "planLoadFailTitle": "구독상품 조회 실패"
   },
-
-  "register": {
-    "title": "회원가입",
-
-    "idLabel": "아이디",
-    "idPlaceholder": "아이디를 입력하세요",
-    "checkIdButton": "중복확인",
-    "availableId": "사용 가능한 아이디입니다.",
-    "enterId": "아이디를 입력해주세요.",
-    "duplicateId": "이미 사용 중인 아이디입니다.",
-    "checkId": "아이디 중복확인을 진행해주세요.",
-
-    "passwordLabel": "비밀번호",
-    "passwordPlaceholder": "비밀번호를 입력하세요",
-    "confirmPasswordLabel": "비밀번호 확인",
-    "confirmPasswordPlaceholder": "비밀번호를 다시 입력하세요",
-    "passwordMismatch": "비밀번호가 일치하지 않습니다.",
-
-    "nameLabel": "이름",
-    "namePlaceholder": "이름을 입력하세요",
-
-    "genderLabel": "성별",
-    "male": "남성",
-    "female": "여성",
-
-    "questionLabel": "비밀번호 찾기 질문",
-    "questionPlaceholder": "질문을 선택하세요",
-    "answerLabel": "답변",
-    "answerPlaceholder": "답변을 입력하세요",
-    "enterQuestion": "비밀번호 찾기 질문과 답변을 입력해주세요.",
-
-    "serviceLabel": "이용할 서비스 선택",
-    "servicePlaque": "플라그 검출 서비스",
-    "serviceGingivitis": "치은염 검출 서비스",
-    "selectService": "이용할 서비스를 선택해주세요.",
-
-    "allAgree": "전체 약관에 동의합니다.",
-    "termService": "서비스 이용약관 (필수)",
-    "termPrivacy": "개인정보 수집 및 이용 동의 (필수)",
-    "termMarketing": "마케팅 정보 수신 동의 (선택)",
-    "mustAgree": "필수 약관에 모두 동의해주세요.",
-    "view": "보기",
-    "close": "닫기",
-
-    "modalTitle_service": "서비스 이용약관",
-    "modalTitle_privacy": "개인정보 수집 및 이용 동의",
-    "modalTitle_marketing": "마케팅 정보 수신 동의",
-
-    "submitButton": "회원가입 완료",
-
-    "missingFields": "모든 필드를 입력해주세요.",
-    "successTitle": "회원가입이 완료되었습니다.",
-    "errorTitle": "오류 발생",
-    "errorMsg": "회원가입 중 오류가 발생했습니다."
+  "usage": {
+    "title": "기관 서비스 이용 통계",
+    "chartTitle": "서비스별 이용 비율",
+    "barChartTitle": "사용자별 사용량 (TOP 10)",
+    "tableTitle": "사용자 상세 사용량 (TOP 10)",
+    "all": "전체",
+    "plaque": "플라그 (PLAQUE)",
+    "periodontal": "치주염 (PERIODONTAL)",
+    "rank": "순위",
+    "name": "이름",
+    "phone": "전화번호",
+    "org": "소속 기관",
+    "service": "서비스명",
+    "count": "응답 성공 횟수",
+    "noOrg": "기관 정보를 불러올 수 없습니다.",
+    "noData": "해당 기관의 데이터가 없습니다."
+  },
+  "header": {
+    "dashboard": "대시보드",
+    "userManage": "사용자 관리",
+    "subscription": "구독정보",
+    "userStatistic": "사용자 통계",
+    "logout": "로그아웃"
+  },
+  "subscription": {
+    "title": "구독 상품 변경",
+    "monthlyView": "월간 보기",
+    "yearlyView": "연간 보기",
+    "current": "현재 구독 중",
+    "monthly": "월 구독",
+    "yearly": "연 구독",
+    "maxResponses": "최대 응답 수: {{count}} 회",
+    "select": "선택하기",
+    "confirmTitle": "구독 변경 확인",
+    "confirmMsg": "{{plan}} 플랜으로 변경하시겠습니까?",
+    "toast": {
+      "successTitle": "구독 변경 완료",
+      "successMsg": "{{plan}} 플랜으로 변경되었습니다.",
+      "failTitle": "구독 변경 실패",
+      "failMsg": "요청 처리 중 오류가 발생했습니다."
+    }
+  },
+  "subscriptionUsage": {
+    "title": "구독 정보",
+    "subTitle": "구독 정보",
+    "desc": "현재 구독 상품 및 사용 현황",
+    "changeBtn": "구독 상품 변경하기",
+    "currentPlan": "현재 구독 상품",
+    "planCycle": "구독 기간",
+    "monthly": "월간",
+    "yearly": "연간",
+    "price": "구독 요금",
+    "max": "제공량",
+    "used": "사용량",
+    "remaining": "잔여량",
+    "usageRate": "사용률",
+    "startDate": "구독 시작일",
+    "resetDate": "갱신일",
+    "userStats": "사용자별 응답 현황",
+    "userName": "사용자 이름",
+    "responses": "응답 수",
+    "ratio": "기관 내 비율 (%)",
+    "toast": {
+      "failTitle": "데이터 불러오기 실패",
+      "failMsg": "서버에서 구독 정보를 불러오지 못했습니다.",
+      "orgErrorTitle": "오류",
+      "orgErrorMsg": "조직 정보를 찾을 수 없습니다.",
+      "changeSuccessTitle": "구독 변경 완료",
+      "changeSuccessMsg": "{{plan}} 플랜으로 변경되었습니다.",
+      "changeFailTitle": "오류 발생",
+      "changeFailMsg": "구독 변경 중 문제가 발생했습니다."
+    }
+  },
+  "userList": {
+    "search": "검색 조건",
+    "keyword": "검색어",
+    "placeholder": { "keyword": "아이디 또는 이름" },
+    "filters": {
+      "title": "필터",
+      "oralStatus": "잇몸 상태",
+      "questionnaire": "문진표 유형",
+      "gender": "성별",
+      "verify": "인증 여부"
+    },
+    "status": { "healthy": "건강", "danger": "위험" },
+    "type": { "adult": "성인", "child": "소아" },
+    "gender": { "male": "남성", "female": "여성" },
+    "verify": {
+      "verified": "인증됨",
+      "unverified": "미인증",
+      "action": "인증하기"
+    },
+    "searchBtn": "검색",
+    "toast": { "loadFail": "사용자 목록을 불러오지 못했습니다." },
+    "verifySuccessTitle": "인증 완료",
+    "verifySuccessDesc": "사용자가 성공적으로 인증되었습니다.",
+    "verifyFailTitle": "인증 실패",
+    "verifyFailDesc": "인증 중 오류가 발생했습니다.",
+    "result": "검색 결과 (총 {{count}}명)",
+    "pageSize": {
+      "10": "10개씩 보기",
+      "30": "30개씩 보기",
+      "50": "50개씩 보기"
+    },
+    "columns": {
+      "id": "아이디",
+      "name": "이름",
+      "questionnaire": "문진표 유형",
+      "date": "문진표 검사일",
+      "oralStatus": "잇몸 상태",
+      "verify": "인증 여부",
+      "services": "이용중인 서비스"
+    },
+    "pagination": { "prev": "이전", "next": "다음" }
+  },
+  "userStats": {
+    "toast": { "fail": "데이터를 불러오지 못했습니다." },
+    "period": {
+      "title": "통계기간 설정",
+      "today": "오늘",
+      "week": "1주일",
+      "month": "1개월",
+      "quarter": "3개월",
+      "year": "1년",
+      "all": "전체"
+    },
+    "gender": { "male": "남성", "female": "여성" },
+    "genderDistribution": "전체 남녀 가입률",
+    "totalUsers": "전체 가입자 수",
+    "maleUsers": "남성 가입자",
+    "femaleUsers": "여성 가입자",
+    "gum": {
+      "healthy": "건강",
+      "good": "양호",
+      "attention": "주의",
+      "danger": "위험"
+    },
+    "gumDistribution": "구강검사 결과 분포"
+  },
+  "userUsage": {
+    "title": "사용자별 사용량",
+    "tabs": {
+      "all": "전체",
+      "plaque": "플라그 (PLAQUE)",
+      "periodontal": "치주염 (PERIODONTAL)"
+    },
+    "topChart": "사용자별 사용량 (TOP 10)",
+    "detailTable": "사용자 상세 사용량 (TOP 10)",
+    "noData": "표시할 데이터가 없습니다.",
+    "columns": {
+      "rank": "순위",
+      "name": "이름",
+      "phone": "전화번호",
+      "organization": "소속 기관",
+      "service": "서비스명",
+      "success": "응답 성공 횟수"
+    }
   }
 }

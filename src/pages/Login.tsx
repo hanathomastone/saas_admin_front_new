@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -13,133 +13,199 @@ import {
   TabList,
   Tabs,
   Text,
+  useToast,
+  useBreakpointValue,
 } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
-import api from "../api"; // ✅ axios 클라이언트
+import { useTranslation } from "react-i18next";
+import api from "../api";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { t, i18n } = useTranslation();
+
   const [language, setLanguage] = useState("ko");
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"user" | "admin">("admin"); // ✅ 기본값 관리자
-  const navigate = useNavigate();
-
+  const [activeTab, setActiveTab] = useState<"user" | "admin">("admin");
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleFocus = (field: string) => setFocusedField(field);
-  const handleBlur = () => setFocusedField(null);
+  /** ✅ 반응형 설정 */
+  const boxPadding = useBreakpointValue({ base: 4, md: 8 });
+  const logoSize = useBreakpointValue({ base: "45px", md: "60px" });
+  const buttonHeight = useBreakpointValue({ base: "45px", md: "50px" });
+  const fontSize = useBreakpointValue({ base: "sm", md: "md" });
 
+  /** ✅ 저장된 언어 불러오기 */
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language");
+    if (savedLang) {
+      setLanguage(savedLang);
+      i18n.changeLanguage(savedLang);
+    }
+  }, [i18n]);
+
+  /** ✅ 언어 변경 */
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value;
+    setLanguage(lang);
+    i18n.changeLanguage(lang);
+    localStorage.setItem("language", lang);
+  };
+
+  /** ✅ 로그인 요청 */
   const handleLogin = async () => {
     try {
       const res = await api.post("/login", {
         loginId: id,
         password: password,
-        userType: activeTab, // ✅ 탭 선택값 반영
+        userType: activeTab,
       });
 
-      // ✅ 로그인 실패 시 처리
       if (res.data.rt) {
-        setError(res.data.rtMsg || "로그인 실패");
+        setError(res.data.rtMsg || t("login.errorMsg"));
+        toast({
+          title: t("login.errorTitle"),
+          description: res.data.rtMsg || t("login.errorMsg"),
+          status: "error",
+          duration: 2500,
+        });
         return;
       }
 
-      // ✅ 공통 토큰 저장
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
 
-      // ✅ 개인 회원 로그인 처리
       if (activeTab === "user") {
         localStorage.setItem("userName", res.data.userName);
         localStorage.setItem("userId", res.data.userId.toString());
-        navigate("/admin/users");
-      }
-      // ✅ 관리자 로그인 처리
-      else {
+        navigate("/dashboard");
+      } else {
         localStorage.setItem("adminName", res.data.adminName);
         localStorage.setItem("adminId", res.data.adminId.toString());
-
-        // ✅ 첫 로그인 여부 확인
+        localStorage.setItem(
+          "organizationName",
+          res.data.organizationName || ""
+        );
+        localStorage.setItem("adminLoginIdentifier", id);
+        localStorage.setItem("adminIsSuper", res.data.adminIsSuper);
         if (res.data.isFirstLogin === "Y") {
-          console.log("첫 로그인 감지 → 기관등록 페이지로 이동");
           navigate("/register/organization");
         } else {
           navigate("/admin/users");
         }
       }
+
+      toast({
+        title: t("login.successTitle"),
+        description: t("login.successMsg", {
+          name: res.data.adminName || res.data.userName,
+        }),
+        status: "success",
+        duration: 2000,
+      });
     } catch (err) {
-      console.error("로그인 중 오류 발생:", err);
-      setError("로그인 중 오류가 발생했습니다.");
+      console.error("❌ 로그인 오류:", err);
+      setError(t("login.networkError"));
+      toast({
+        title: t("login.errorTitle"),
+        description: t("login.networkError"),
+        status: "error",
+        duration: 2000,
+      });
     }
   };
 
+  const handleFocus = (field: string) => setFocusedField(field);
+  const handleBlur = () => setFocusedField(null);
+
+  /** ✅ 회원가입 이동 */
+  const handleRegister = () => navigate("/register");
+
   return (
-    <Flex minH="100vh" align="center" justify="center" bg="white" px={6}>
-      <Box w="100%" maxW="400px">
-        {/* Header */}
-        <Flex justify="flex-end" align="right" mb={6}>
+    <Flex
+      minH="100vh"
+      align="center"
+      justify="center"
+      bgGradient="linear(to-br, blue.50, white)"
+      px={boxPadding}
+    >
+      <Box
+        w="100%"
+        maxW="500px"
+        bg="white"
+        p={boxPadding}
+        borderRadius="2xl"
+        boxShadow="0 4px 15px rgba(0, 0, 0, 0.08)"
+        border="1px solid"
+        borderColor="gray.100"
+      >
+        {/* ✅ Header: 언어 선택 */}
+        <Flex justify="flex-end" mb={4}>
           <Select
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={handleLanguageChange}
             w="120px"
             borderRadius="md"
             border="1px solid"
             borderColor="gray.300"
             fontSize="sm"
             textAlign="center"
-            iconSize="16px"
           >
-            <option value="ko">한국어</option>
-            <option value="en">English</option>
-            <option value="vi">베트남어</option>
+            <option value="ko">{t("common.korean")}</option>
+            <option value="en">{t("common.english")}</option>
+            <option value="vi">{t("common.vietnamese")}</option>
           </Select>
         </Flex>
 
-        {/* 로고 */}
+        {/* ✅ 로고 */}
         <Image
           src="/images/DentiGlobal.png"
-          alt="Dentix Logo"
+          alt="DentiGlobal Logo"
           mx="auto"
           mb={8}
-          h="60px"
+          h={logoSize}
         />
 
-        {/* Tabs */}
+        {/* ✅ Tabs: 개인 / 관리자 */}
         <Tabs
           variant="unstyled"
           align="center"
           mb={6}
-          defaultIndex={1} // ✅ 기본 선택: 관리자 탭
+          defaultIndex={1}
           onChange={(index) => setActiveTab(index === 0 ? "user" : "admin")}
         >
           <TabList borderBottom="1px solid" borderColor="gray.200">
             <Tab
+              flex="1"
               _selected={{
                 color: "blue.600",
                 borderBottom: "2px solid",
                 borderColor: "blue.600",
+                fontWeight: "semibold",
               }}
-              flex="1"
             >
-              개인 회원
+              {t("login.userTab")}
             </Tab>
             <Tab
+              flex="1"
               _selected={{
                 color: "blue.600",
                 borderBottom: "2px solid",
                 borderColor: "blue.600",
+                fontWeight: "semibold",
               }}
-              flex="1"
             >
-              관리자 회원
+              {t("login.adminTab")}
             </Tab>
           </TabList>
         </Tabs>
 
-        {/* 입력 필드 */}
+        {/* ✅ 로그인 폼 */}
         <Box mb={4}>
           <FormControl>
-            <FormLabel>아이디</FormLabel>
+            <FormLabel fontSize={fontSize}>{t("login.idLabel")}</FormLabel>
             <Input
               type="text"
               value={id}
@@ -151,13 +217,16 @@ export default function Login() {
               _hover={{
                 borderColor: focusedField === "id" ? "blue.400" : "gray.400",
               }}
+              placeholder={t("login.idPlaceholder")}
             />
           </FormControl>
         </Box>
 
         <Box mb={6}>
           <FormControl>
-            <FormLabel>비밀번호</FormLabel>
+            <FormLabel fontSize={fontSize}>
+              {t("login.passwordLabel")}
+            </FormLabel>
             <Input
               type="password"
               value={password}
@@ -169,45 +238,63 @@ export default function Login() {
               _hover={{
                 borderColor: focusedField === "pw" ? "blue.400" : "gray.400",
               }}
+              placeholder={t("login.passwordPlaceholder")}
             />
           </FormControl>
         </Box>
 
-        {/* 로그인 버튼 */}
+        {/* ✅ 로그인 버튼 */}
         <Button
-          colorScheme="blue"
           w="100%"
-          h="50px"
-          mb={4}
+          h={buttonHeight}
+          fontSize={fontSize}
+          fontWeight="bold"
+          bgGradient="linear(to-r, blue.400, blue.600)"
+          color="white"
+          _hover={{
+            bgGradient: "linear(to-r, blue.500, blue.700)",
+            boxShadow: "md",
+          }}
+          borderRadius="md"
           onClick={handleLogin}
+          mb={3}
         >
-          로그인
+          {t("login.loginButton")}
         </Button>
 
-        {/* 에러 메시지 */}
+        {/* ✅ 회원가입 버튼 */}
+        <Button
+          w="100%"
+          h={buttonHeight}
+          fontSize={fontSize}
+          fontWeight="medium"
+          bg="white"
+          color="blue.600"
+          border="1px solid"
+          borderColor="blue.400"
+          _hover={{
+            bg: "blue.50",
+            borderColor: "blue.500",
+          }}
+          borderRadius="md"
+          onClick={handleRegister}
+          mb={3}
+        >
+          {t("login.registerButton")}
+        </Button>
+
+        {/* ✅ 에러 메시지 */}
         {error && (
           <Text color="red.500" textAlign="center" mb={4}>
             {error}
           </Text>
         )}
 
-        {/* Footer */}
+        {/* ✅ Footer */}
         <Flex justify="center" gap={4} mt={4} fontSize="sm" color="gray.500">
-          <RouterLink to="/register">
-            <Text as="span" color="blue.500" cursor="pointer">
-              회원가입
-            </Text>
-          </RouterLink>
-          <Text>|</Text>
-          <RouterLink to="/find-password">
-            <Text as="span" color="blue.500" cursor="pointer">
-              비밀번호 찾기
-            </Text>
-          </RouterLink>
-          <Text>|</Text>
           <RouterLink to="/contact" state={{ from: "login" }}>
             <Text as="span" color="blue.500" cursor="pointer">
-              문의하기
+              {t("footer.contact")}
             </Text>
           </RouterLink>
         </Flex>

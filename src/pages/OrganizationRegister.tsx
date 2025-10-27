@@ -26,11 +26,13 @@ import {
   ModalFooter,
   Spinner,
   Center,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
+import { useTranslation } from "react-i18next";
 
 interface Plan {
   id: number;
@@ -55,6 +57,7 @@ interface CreatedOrganization {
 export default function OrganizationRegister() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslation();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [form, setForm] = useState({
@@ -63,13 +66,17 @@ export default function OrganizationRegister() {
     subscriptionPlanId: 0,
   });
 
-  // const [_cycle, setCycle] = useState<"year" | "month">("month");
   const [createdOrg, setCreatedOrg] = useState<CreatedOrganization | null>(
     null
   );
-
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+
+  /** ✅ 반응형 설정 */
+  const boxPadding = useBreakpointValue({ base: 6, md: 10 });
+  const headingSize = useBreakpointValue({ base: "2xl", md: "3xl" });
+  const buttonWidth = useBreakpointValue({ base: "130px", md: "150px" });
+  const columns = useBreakpointValue({ base: 1, sm: 2, md: 3 });
 
   // ✅ 구독상품 목록 불러오기
   useEffect(() => {
@@ -80,9 +87,9 @@ export default function OrganizationRegister() {
       } catch (error) {
         const err = error as AxiosError<{ message?: string }>;
         toast({
-          title: "구독상품 조회 실패",
+          title: t("organization.planLoadFailTitle"),
           description:
-            err.response?.data?.message || "서버 오류가 발생했습니다.",
+            err.response?.data?.message || t("organization.serverError"),
           status: "error",
         });
       } finally {
@@ -90,7 +97,7 @@ export default function OrganizationRegister() {
       }
     };
     fetchPlans();
-  }, [toast]);
+  }, [toast, t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -105,7 +112,7 @@ export default function OrganizationRegister() {
       !form.subscriptionPlanId
     ) {
       toast({
-        title: "모든 항목을 입력해주세요.",
+        title: t("organization.requiredWarning"),
         status: "warning",
         duration: 2000,
       });
@@ -121,9 +128,9 @@ export default function OrganizationRegister() {
       const message =
         err.response?.data?.message ||
         err.message ||
-        "서버 오류가 발생했습니다.";
+        t("organization.serverError");
       toast({
-        title: "등록 실패",
+        title: t("organization.registerFail"),
         description: message,
         status: "error",
       });
@@ -151,14 +158,15 @@ export default function OrganizationRegister() {
       minH="100vh"
       bg="gray.50"
       py={10}
+      px={4}
     >
       {/* 로고 및 제목 */}
-      <VStack spacing={2} mb={10}>
-        <Heading color="blue.600" fontWeight="bold" fontSize="3xl">
+      <VStack spacing={2} mb={10} textAlign="center">
+        <Heading color="blue.600" fontWeight="bold" fontSize={headingSize}>
           DentiGlobal
         </Heading>
         <Text fontSize="lg" fontWeight="semibold">
-          기관 등록
+          {t("organization.registerTitle")}
         </Text>
       </VStack>
 
@@ -170,16 +178,16 @@ export default function OrganizationRegister() {
         bg="white"
         rounded="2xl"
         boxShadow="md"
-        p={10}
+        p={boxPadding}
       >
         {/* 기관명 */}
         <Box w="100%">
           <Text mb={1} fontWeight="medium">
-            기관명
+            {t("organization.nameLabel")}
           </Text>
           <Input
             name="organizationName"
-            placeholder="기관명을 입력하세요"
+            placeholder={t("organization.namePlaceholder")}
             value={form.organizationName}
             onChange={handleChange}
             focusBorderColor="blue.400"
@@ -189,11 +197,11 @@ export default function OrganizationRegister() {
         {/* 전화번호 */}
         <Box w="100%">
           <Text mb={1} fontWeight="medium">
-            기관 전화번호
+            {t("organization.phoneLabel")}
           </Text>
           <Input
             name="organizationPhoneNumber"
-            placeholder="전화번호를 입력하세요"
+            placeholder={t("organization.phonePlaceholder")}
             value={form.organizationPhoneNumber}
             onChange={handleChange}
             focusBorderColor="blue.400"
@@ -203,24 +211,19 @@ export default function OrganizationRegister() {
         {/* 구독상품 */}
         <Box w="100%" textAlign="center">
           <Text fontWeight="semibold" mt={4}>
-            구독상품
+            {t("organization.subscriptionLabel")}
           </Text>
 
-          <Tabs
-            variant="soft-rounded"
-            colorScheme="blue"
-            mt={2}
-            // onChange={(index) => setCycle(index === 0 ? "year" : "month")}
-          >
+          <Tabs variant="soft-rounded" colorScheme="blue" mt={2}>
             <TabList justifyContent="center">
-              <Tab>연간 요금제</Tab>
-              <Tab>월간 요금제</Tab>
+              <Tab>{t("organization.yearlyPlanTab")}</Tab>
+              <Tab>{t("organization.monthlyPlanTab")}</Tab>
             </TabList>
 
             <TabPanels>
               {/* 연간 요금제 */}
               <TabPanel>
-                <SimpleGrid columns={3} spacing={4} mt={4}>
+                <SimpleGrid columns={columns} spacing={4} mt={4}>
                   {yearlyPlans.map((p) => (
                     <Card
                       key={p.id}
@@ -246,7 +249,9 @@ export default function OrganizationRegister() {
                           ₩{p.price.toLocaleString()}
                         </Text>
                         <Text fontSize="sm" color="gray.500">
-                          최대 {p.maxSuccessResponses.toLocaleString()}건
+                          {t("organization.maxCount", {
+                            countText: p.maxSuccessResponses.toLocaleString(),
+                          })}
                         </Text>
                       </CardBody>
                     </Card>
@@ -256,7 +261,7 @@ export default function OrganizationRegister() {
 
               {/* 월간 요금제 */}
               <TabPanel>
-                <SimpleGrid columns={3} spacing={4} mt={4}>
+                <SimpleGrid columns={columns} spacing={4} mt={4}>
                   {monthlyPlans.map((p) => (
                     <Card
                       key={p.id}
@@ -282,7 +287,9 @@ export default function OrganizationRegister() {
                           ₩{p.price.toLocaleString()}
                         </Text>
                         <Text fontSize="sm" color="gray.500">
-                          최대 {p.maxSuccessResponses.toLocaleString()}건
+                          {t("organization.maxCount", {
+                            count: p.maxSuccessResponses,
+                          })}
                         </Text>
                       </CardBody>
                     </Card>
@@ -295,11 +302,15 @@ export default function OrganizationRegister() {
 
         {/* 버튼 */}
         <HStack spacing={4} mt={8}>
-          <Button colorScheme="blue" w="150px" onClick={handleRegister}>
-            등록하기
+          <Button colorScheme="blue" w={buttonWidth} onClick={handleRegister}>
+            {t("organization.registerButton")}
           </Button>
-          <Button w="150px" colorScheme="gray" onClick={() => navigate(-1)}>
-            이전화면
+          <Button
+            w={buttonWidth}
+            colorScheme="gray"
+            onClick={() => navigate(-1)}
+          >
+            {t("organization.prevButton")}
           </Button>
         </HStack>
       </VStack>
@@ -309,7 +320,7 @@ export default function OrganizationRegister() {
         <ModalOverlay />
         <ModalContent p={3}>
           <ModalHeader textAlign="center" color="blue.600">
-            기관 등록 완료 🎉
+            {t("organization.registerSuccessTitle")}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody textAlign="center" py={4}>
@@ -319,20 +330,24 @@ export default function OrganizationRegister() {
                   {createdOrg.organizationName}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
-                  구독 상품: {createdOrg.subscriptionPlanName}
+                  {t("organization.planName", {
+                    name: createdOrg.subscriptionPlanName,
+                  })}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
-                  시작일: {createdOrg.subscriptionStartDate?.slice(0, 10)}
+                  {t("organization.startDate")}:{" "}
+                  {createdOrg.subscriptionStartDate?.slice(0, 10)}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
-                  갱신일: {createdOrg.usageResetDate?.slice(0, 10)}
+                  {t("organization.renewalDate")}:{" "}
+                  {createdOrg.usageResetDate?.slice(0, 10)}
                 </Text>
               </>
             )}
           </ModalBody>
           <ModalFooter justifyContent="center">
             <Button colorScheme="blue" onClick={() => navigate("/admin/users")}>
-              확인
+              {t("common.confirm")}
             </Button>
           </ModalFooter>
         </ModalContent>

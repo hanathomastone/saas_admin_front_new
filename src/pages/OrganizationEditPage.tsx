@@ -1,4 +1,3 @@
-// src/pages/admin/OrganizationEdit.tsx
 import {
   Box,
   Button,
@@ -11,11 +10,13 @@ import {
   HStack,
   Spinner,
   Center,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
+import { useTranslation } from "react-i18next";
 
 interface OrganizationDetail {
   organizationId: number;
@@ -26,24 +27,25 @@ interface OrganizationDetail {
 export default function OrganizationEdit() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState<OrganizationDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ 기관 정보 + 구독상품 목록 불러오기
+  /** ✅ 반응형 설정 */
+  const boxPadding = useBreakpointValue({ base: 6, md: 10 });
+  const headingSize = useBreakpointValue({ base: "2xl", md: "3xl" });
+  const buttonWidth = useBreakpointValue({ base: "120px", md: "150px" });
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [orgRes] = await Promise.all([
-          api.get("/admin/organization/my"),
-          // api.get("/admin/subscriptions/all"),
-        ]);
+        const orgRes = await api.get("/admin/organization/my");
 
-        // ✅ 기관 정보가 없으면 등록 페이지로 이동
         if (!orgRes.data || !orgRes.data.organizationId) {
           toast({
-            title: "기관 정보가 없습니다.",
-            description: "기관 등록 페이지로 이동합니다.",
+            title: t("organization.noDataTitle"),
+            description: t("organization.noDataDesc"),
             status: "info",
             duration: 2000,
             isClosable: true,
@@ -56,9 +58,9 @@ export default function OrganizationEdit() {
       } catch (error) {
         const err = error as AxiosError<{ message?: string }>;
         toast({
-          title: "기관 정보를 불러오지 못했습니다.",
+          title: t("organization.loadErrorTitle"),
           description:
-            err.response?.data?.message || "서버 오류가 발생했습니다.",
+            err.response?.data?.message || t("organization.serverError"),
           status: "error",
         });
       } finally {
@@ -66,20 +68,19 @@ export default function OrganizationEdit() {
       }
     };
     fetchData();
-  }, [toast, navigate]);
+  }, [toast, navigate, t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => (prev ? { ...prev, [name]: value } : prev));
   };
 
-  // ✅ 기관 정보 수정
   const handleUpdate = async () => {
     if (!form) return;
 
     if (!form.organizationName || !form.organizationPhoneNumber) {
       toast({
-        title: "기관명과 전화번호를 입력해주세요.",
+        title: t("organization.requiredWarning"),
         status: "warning",
       });
       return;
@@ -91,7 +92,7 @@ export default function OrganizationEdit() {
         organizationPhoneNumber: form.organizationPhoneNumber,
       });
       toast({
-        title: "기관 정보가 수정되었습니다.",
+        title: t("organization.updateSuccess"),
         status: "success",
         duration: 2000,
       });
@@ -101,9 +102,9 @@ export default function OrganizationEdit() {
       const message =
         err.response?.data?.message ||
         err.message ||
-        "서버 오류가 발생했습니다.";
+        t("organization.serverError");
       toast({
-        title: "수정 실패",
+        title: t("organization.updateFail"),
         description: message,
         status: "error",
       });
@@ -118,28 +119,27 @@ export default function OrganizationEdit() {
     );
   }
 
-  // const currentPlan = plans.find((p) => p.id === form.subscriptionPlanId);
-
   return (
     <Flex
       direction="column"
       align="center"
-      justify="center"
+      justify="flex-start"
       minH="100vh"
       bg="gray.50"
-      py={10}
+      pt={16}
+      px={4}
     >
-      {/* 로고 및 제목 */}
-      <VStack spacing={2} mb={10}>
-        <Heading color="blue.600" fontWeight="bold" fontSize="3xl">
-          DentiGlobal
+      {/* ✅ 상단 제목 */}
+      <VStack spacing={1} mb={8}>
+        <Heading color="blue.600" fontWeight="bold" fontSize={headingSize}>
+          {form.organizationName}
         </Heading>
         <Text fontSize="lg" fontWeight="semibold">
-          기관 정보 수정
+          {t("organization.editTitle")}
         </Text>
       </VStack>
 
-      {/* 입력 폼 */}
+      {/* ✅ 입력 폼 */}
       <VStack
         spacing={5}
         w="full"
@@ -147,43 +147,47 @@ export default function OrganizationEdit() {
         bg="white"
         rounded="2xl"
         boxShadow="md"
-        p={10}
+        p={boxPadding}
       >
         {/* 기관명 */}
         <Box w="100%">
           <Text mb={1} fontWeight="medium">
-            기관명
+            {t("organization.nameLabel")}
           </Text>
           <Input
             name="organizationName"
-            placeholder="기관명을 입력하세요"
+            placeholder={t("organization.namePlaceholder")}
             value={form.organizationName}
             onChange={handleChange}
             focusBorderColor="blue.400"
           />
         </Box>
 
-        {/* 전화번호 */}
+        {/* 기관 전화번호 */}
         <Box w="100%">
           <Text mb={1} fontWeight="medium">
-            기관 전화번호
+            {t("organization.phoneLabel")}
           </Text>
           <Input
             name="organizationPhoneNumber"
-            placeholder="전화번호를 입력하세요"
+            placeholder={t("organization.phonePlaceholder")}
             value={form.organizationPhoneNumber}
             onChange={handleChange}
             focusBorderColor="blue.400"
           />
         </Box>
 
-        {/* 버튼 */}
+        {/* 버튼 영역 */}
         <HStack spacing={4} mt={8}>
-          <Button colorScheme="blue" w="150px" onClick={handleUpdate}>
-            수정하기
+          <Button colorScheme="blue" w={buttonWidth} onClick={handleUpdate}>
+            {t("organization.updateButton")}
           </Button>
-          <Button w="150px" colorScheme="gray" onClick={() => navigate(-1)}>
-            돌아가기
+          <Button
+            w={buttonWidth}
+            colorScheme="gray"
+            onClick={() => navigate(-1)}
+          >
+            {t("organization.backButton")}
           </Button>
         </HStack>
       </VStack>
